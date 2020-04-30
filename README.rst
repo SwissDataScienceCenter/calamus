@@ -15,9 +15,9 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
-=================================================
- marshLD: Json-LD Serialization Libary for Python
-=================================================
+==================================================
+ calamus: Json-LD Serialization Libary for Python
+==================================================
 
-marshLD is a library built on top of marshmallow to allow (de-)Serialization
+calamus is a library built on top of marshmallow to allow (de-)Serialization
 of Python classes to Json-LD
