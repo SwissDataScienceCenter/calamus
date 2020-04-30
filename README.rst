@@ -15,6 +15,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 
+.. image:: https://github.com/SwissDataScienceCenter/calamus/blob/master/docs/reed.png?raw=true
+   :scale: 50
+   :align: center
+
 ==================================================
  calamus: Json-LD Serialization Libary for Python
 ==================================================
