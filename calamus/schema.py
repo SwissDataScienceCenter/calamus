@@ -12,6 +12,7 @@ class JsonLDSchemaOpts(SchemaOpts):
     def __init__(self, meta, *args, **kwargs):
         super().__init__(meta, *args, **kwargs)
         self.class_type = getattr(meta, "class_type", None)
+        self.add_value_types = getattr(meta, "add_value_types", False)
 
 
 class JsonLDSchema(Schema):

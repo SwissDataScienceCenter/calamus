@@ -57,6 +57,17 @@ class String(_JsonLDField, fields.String):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#string"}
+        return value
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, dict):
+            value = value["@value"]
+        return super()._deserialize(value, attr, data, **kwargs)
+
 
 class Integer(_JsonLDField, fields.Integer):
     def __init__(self, *args, **kwargs):
