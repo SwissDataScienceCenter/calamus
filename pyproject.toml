@@ -1,12 +1,29 @@
 [tool.poetry]
 name = "calamus"
-version = "0.1.0"
-description = ""
-authors = ["Panaetius <ralf.grubenmann@sdsc.ethz.ch>"]
+version = "0.1.1"
+description = "calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to Json-LD."
+authors = ["Swiss Data Science Center <contact@datascience.ch>"]
+license = "Apache-2.0"
+readme = "README.rst"
+homepage = "https://github.com/SwissDataScienceCenter/calamus/"
+repository = "https://github.com/SwissDataScienceCenter/calamus/"
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Development Status :: 4 - Beta",
+]
 
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.7"
 marshmallow = "^3.5.1"
+pyld = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

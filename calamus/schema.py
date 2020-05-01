@@ -5,6 +5,8 @@ from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
 
+from pyld import jsonld
+
 import inspect
 
 import typing
@@ -140,6 +142,10 @@ class JsonLDSchema(Schema):
         if not isinstance(data, Mapping):
             error_store.store_error([self.error_messages["type"]], index=index)
         else:
+            if data.get("@context", None):
+                # we got compacted jsonld, expand it
+                data = jsonld.expand(data)
+
             partial_is_collection = is_collection(partial)
             for attr_name, field_obj in self.load_fields.items():
                 field_name = field_obj.data_key if field_obj.data_key is not None else attr_name
