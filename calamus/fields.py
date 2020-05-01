@@ -8,7 +8,9 @@ import copy
 logger = logging.getLogger("calamus")
 
 
-class FieldName(object):
+class IRI(object):
+    """ Represent an IRI in a namespace."""
+
     def __init__(self, namespace, name):
         self.namespace = namespace
         self.name = name
@@ -18,20 +20,26 @@ class FieldName(object):
 
 
 class Namespace(object):
+    """Represents a namespace/ontology."""
+
     def __init__(self, namespace):
         self.namespace = namespace
 
     def __getattr__(self, name):
-        return FieldName(self, name)
+        return IRI(self, name)
 
     def __str__(self):
         return self.namespace
 
 
 class _JsonLDField(fields.Field):
+    """Internal class that enables marshmallow fields to be serialized with a JsonLD field name."""
+
     def __init__(self, field_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.field_name = field_name
+
+        self.reverse = kwargs.get("reverse", False)
 
     @property
     def data_key(self):
@@ -44,6 +52,8 @@ class _JsonLDField(fields.Field):
 
 
 class Id(fields.String):
+    """A node identifier."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -58,6 +68,8 @@ class Id(fields.String):
 
 
 class String(_JsonLDField, fields.String):
+    """A string field."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -74,34 +86,71 @@ class String(_JsonLDField, fields.String):
 
 
 class Integer(_JsonLDField, fields.Integer):
+    """An integer field."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#integer"}
+        return value
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, dict):
+            value = value["@value"]
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class Float(_JsonLDField, fields.Float):
+    """A float field."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#float"}
+        return value
 
-class Date(_JsonLDField, fields.DateTime):
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, dict):
+            value = value["@value"]
+        return super()._deserialize(value, attr, data, **kwargs)
+
+
+class DateTime(_JsonLDField, fields.DateTime):
+    """A date/time field."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
+        return value
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, dict):
+            value = value["@value"]
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class Nested(_JsonLDField, fields.Nested):
+    """A reference to one or more nested classes."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.reverse = kwargs.get("reverse", False)
 
         if not isinstance(self.nested, list):
             self.nested = [self.nested]
 
     @property
     def schema(self):
-        """The nested Schema object.
-        .. versionchanged:: 1.0.0
-            Renamed from `serializer` to `schema`.
-        """
+        """The nested Schema object. """
         if not self._schema:
             # Inherit context from parent.
             context = getattr(self.parent, "context", {})
@@ -209,5 +258,14 @@ class Nested(_JsonLDField, fields.Nested):
 
 
 class List(_JsonLDField, fields.List):
+    """An ordered list using the ``@list`` keyword."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        return {"@list": value}
+
+    def _deserialize(self, value, attr, data, **kwargs) -> typing.List[typing.Any]:
+        return super()._deserialize(value["@list"], attr, data, **kwargs)

@@ -8,7 +8,12 @@ _T = typing.TypeVar("_T")
 
 
 class JsonLDSchemaOpts(SchemaOpts):
-    """ """
+    """Options class for `JsonLDSchema`.
+    Adds the following options:
+    - ``class_type``: The RDF type(s) for this schema.
+    - ``mapped_type``: The python type this schema (de-)serializes.
+    - ``add_value_types``: Whether to add ``@type`` information to scalar field values.
+    """
 
     def __init__(self, meta, *args, **kwargs):
         super().__init__(meta, *args, **kwargs)
@@ -18,7 +23,20 @@ class JsonLDSchemaOpts(SchemaOpts):
 
 
 class JsonLDSchema(Schema):
-    """ """
+    """Schema for a JsonLD class.
+    Example: ::
+        from calamus import JsonLDSchema
+        import calamus.fields as fields
+        from mymodels import User
+        schema = fields.Namespace("http://schema.org/")
+        class UserSchema(JsonLDSchema):
+            class Meta:
+                class_type = schema.Person
+                mapped_type = User
+            _id = fields.Id()
+            birth_date = fields.Date(schema.birthDate)
+            name = fields.String(schema.name)
+    """
 
     OPTIONS_CLASS = JsonLDSchemaOpts
 
