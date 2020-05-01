@@ -1,5 +1,9 @@
 import marshmallow.fields as fields
+from marshmallow.base import SchemaABC
+from marshmallow import class_registry, utils
+from marshmallow.exceptions import ValidationError
 import logging
+import copy
 
 logger = logging.getLogger("calamus")
 
@@ -87,6 +91,121 @@ class Date(_JsonLDField, fields.DateTime):
 class Nested(_JsonLDField, fields.Nested):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.reverse = kwargs.get("reverse", False)
+
+        if not isinstance(self.nested, list):
+            self.nested = [self.nested]
+
+    @property
+    def schema(self):
+        """The nested Schema object.
+        .. versionchanged:: 1.0.0
+            Renamed from `serializer` to `schema`.
+        """
+        if not self._schema:
+            # Inherit context from parent.
+            context = getattr(self.parent, "context", {})
+            self._schema = {"from": {}, "to": {}}
+            for nest in self.nested:
+                if isinstance(nest, SchemaABC):
+                    class_type = nest.opts.class_type
+                    mapped_type = nest.opts.mapped_type
+                    if not class_type or not mapped_type:
+                        raise ValueError(
+                            "Both class_type and mapped_type need to be set on the schema for nested to work"
+                        )
+                    _schema = copy.copy(nest)
+                    _schema.context.update(context)
+                    # Respect only and exclude passed from parent and re-initialize fields
+                    set_class = _schema.set_class
+                    if self.only is not None:
+                        if self._schema.only is not None:
+                            original = _schema.only
+                        else:  # only=None -> all fields
+                            original = _schema.fields.keys()
+                        _schema.only = set_class(self.only).intersection(original)
+                    if self.exclude:
+                        original = _schema.exclude
+                        _schema.exclude = set_class(self.exclude).union(original)
+                    _schema._init_fields()
+                    self._schema["from"][class_type] = _schema
+                    self._schema["to"][mapped_type] = _schema
+                else:
+                    if isinstance(nest, type) and issubclass(nest, SchemaABC):
+                        schema_class = nest
+                    elif not isinstance(nest, (str, bytes)):
+                        raise ValueError("Nested fields must be passed a " "Schema, not {}.".format(nest.__class__))
+                    elif nest == "self":
+                        ret = self
+                        while not isinstance(ret, SchemaABC):
+                            ret = ret.parent
+                        schema_class = ret.__class__
+                    else:
+                        schema_class = class_registry.get_class(nest)
+
+                    class_type = schema_class.opts.class_type
+                    mapped_type = schema_class.opts.mapped_type
+                    if not class_type or not mapped_type:
+                        raise ValueError(
+                            "Both class_type and mapped_type need to be set on the schema for nested to work"
+                        )
+                    self._schema["from"][class_type] = schema_class(
+                        many=False,
+                        only=self.only,
+                        exclude=self.exclude,
+                        context=context,
+                        load_only=self._nested_normalized_option("load_only"),
+                        dump_only=self._nested_normalized_option("dump_only"),
+                    )
+                    self._schema["to"][mapped_type] = self._schema["from"][class_type]
+        return self._schema
+
+    def _serialize(self, nested_obj, attr, obj, many=False, **kwargs):
+        # Load up the schema first. This allows a RegistryError to be raised
+        # if an invalid schema name was passed
+        if nested_obj is None:
+            return None
+        many = self.many or many
+        if many:
+            result = []
+            for obj in nested_obj:
+                if type(obj) not in self.schema["to"]:
+                    ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
+                schema = self.schema["to"][type(obj)]
+                result.append(schema.dump(obj))
+            return result
+        else:
+            if utils.is_collection(nested_obj):
+                raise ValueError("Expected single value for field {} but got a collection".format(self.name))
+            if type(nested_obj) not in self.schema["to"]:
+                ValueError("Type {} not found in field {}.{}".format(type(nested_obj), type(self.parent), self.name))
+            schema = self.schema["to"][type(nested_obj)]
+            return schema.dump(nested_obj)
+
+    def _test_collection(self, value, many=False):
+        many = self.many or many
+        if many and not utils.is_collection(value):
+            raise self.make_error("type", input=value, type=value.__class__.__name__)
+
+    def _load(self, value, data, partial=None, many=False):
+        many = self.many or many
+
+        try:
+            if many:
+                valid_data = []
+                for val in value:
+                    schema = self.schema["from"][val["@type"]]
+                    if not schema:
+                        ValueError("Type {} not found in {}.{}".format(val["@type"], type(self.parent), self.data_key))
+                    valid_data.append(schema.load(val, unknown=self.unknown, partial=partial))
+            else:
+                schema = self.schema["from"][value["@type"]]
+                if not schema:
+                    ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
+                valid_data = schema.load(value, unknown=self.unknown, partial=partial)
+        except ValidationError as error:
+            raise ValidationError(error.messages, valid_data=error.valid_data) from error
+        return valid_data
 
 
 class List(_JsonLDField, fields.List):

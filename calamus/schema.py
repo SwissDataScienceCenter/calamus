@@ -1,5 +1,6 @@
 from marshmallow.schema import Schema, SchemaMeta, SchemaOpts
 from marshmallow.fields import Field
+from marshmallow.utils import missing
 
 import typing
 
@@ -12,6 +13,7 @@ class JsonLDSchemaOpts(SchemaOpts):
     def __init__(self, meta, *args, **kwargs):
         super().__init__(meta, *args, **kwargs)
         self.class_type = getattr(meta, "class_type", None)
+        self.mapped_type = getattr(meta, "mapped_type", None)
         self.add_value_types = getattr(meta, "add_value_types", False)
 
 
@@ -22,7 +24,21 @@ class JsonLDSchema(Schema):
 
     def _serialize(self, obj: typing.Union[_T, typing.Iterable[_T]], *, many: bool = False):
         """Serialize ``obj`` to jsonld."""
-        ret = super()._serialize(obj, many=many)
+        if many and obj is not None:
+            return [self._serialize(d, many=False) for d in typing.cast(typing.Iterable[_T], obj)]
+        ret = self.dict_class()
+        for attr_name, field_obj in self.dump_fields.items():
+            value = field_obj.serialize(attr_name, obj, accessor=self.get_attribute)
+            if value is missing:
+                continue
+            key = field_obj.data_key if field_obj.data_key is not None else attr_name
+            reverse = getattr(field_obj, "reverse", False)
+            if reverse:
+                if "@reverse" not in ret:
+                    ret["@reverse"] = self.dict_class()
+                ret["@reverse"][key] = value
+            else:
+                ret[key] = value
 
         # add type
         class_type = self.opts.class_type
