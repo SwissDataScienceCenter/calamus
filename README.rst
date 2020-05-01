@@ -25,3 +25,83 @@
 
 calamus is a library built on top of marshmallow to allow (de-)Serialization
 of Python classes to Json-LD
+
+
+Installation
+============
+
+calamus releases and development versions are available from `PyPI
+<https://pypi.org/project/calamus/>`_. You can install it using any tool that
+knows how to handle PyPI packages.
+
+With pip:
+
+::
+
+    $ pip install calamus
+
+
+Usage
+=====
+
+Assuming you have a class like
+
+::
+
+    class Book:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+Declare schemas
+---------------
+You can declare a schema for serialization like
+::
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        class Meta:
+            class_type = schema.Book
+            mapped_type = Book
+
+The ``fields.Namespace`` class represents an ontology namespace.
+
+Make sure to set ``class_type`` to the RDF triple type you want get and
+``mapped_type`` to the python class this schema applies to.
+
+Serializing objects ("Dumping")
+-------------------------------
+
+You can now easily serialize python classes to Json-LD
+
+::
+
+    book = Book(_id="http://example.com/books/1", name="Ilias")
+    jsonld_dict = BookSchema().dump(book)
+    #{
+    #    "@id": "http://example.com/books/1",
+    #    "@type": "http://schema.org/Book",
+    #    "http://schema.org/name": "Ilias",
+    #}
+
+    jsonld_string = BookSchema().dumps(book)
+    #'{"@id": "http://example.com/books/1", "http://schema.org/name": "Ilias", "@type": "http://schema.org/Book"}')
+
+Deserializing objects ("Loading")
+---------------------------------
+
+You can also easily deserialize Json-LD to python objects
+
+::
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": "http://schema.org/Book",
+        "http://schema.org/name": "Ilias",
+    }
+    book = BookSchema().load(data)
+    #<Book(_id="http://example.com/books/1", name="Ilias")>
