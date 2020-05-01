@@ -5,6 +5,8 @@ from marshmallow.exceptions import ValidationError
 import logging
 import copy
 
+import typing
+
 logger = logging.getLogger("calamus")
 
 
@@ -157,7 +159,7 @@ class Nested(_JsonLDField, fields.Nested):
             self._schema = {"from": {}, "to": {}}
             for nest in self.nested:
                 if isinstance(nest, SchemaABC):
-                    class_type = nest.opts.class_type
+                    class_type = str(nest.opts.class_type)
                     mapped_type = nest.opts.mapped_type
                     if not class_type or not mapped_type:
                         raise ValueError(
@@ -192,7 +194,7 @@ class Nested(_JsonLDField, fields.Nested):
                     else:
                         schema_class = class_registry.get_class(nest)
 
-                    class_type = schema_class.opts.class_type
+                    class_type = str(schema_class.opts.class_type)
                     mapped_type = schema_class.opts.mapped_type
                     if not class_type or not mapped_type:
                         raise ValueError(

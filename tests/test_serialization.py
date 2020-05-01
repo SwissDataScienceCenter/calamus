@@ -16,6 +16,7 @@ def test_simple_serialization():
 
         class Meta:
             class_type = schema.Book
+            mapped_type = Book
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
 
@@ -43,6 +44,7 @@ def test_simple_serialization_with_value_type():
 
         class Meta:
             class_type = schema.Book
+            mapped_type = Book
             add_value_types = True
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
