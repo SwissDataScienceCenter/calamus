@@ -65,13 +65,13 @@ You can declare a schema for serialization like
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
 The ``fields.Namespace`` class represents an ontology namespace.
 
-Make sure to set ``class_type`` to the RDF triple type you want get and
-``mapped_type`` to the python class this schema applies to.
+Make sure to set ``rdf_type`` to the RDF triple type you want get and
+``model`` to the python class this schema applies to.
 
 Serializing objects ("Dumping")
 -------------------------------

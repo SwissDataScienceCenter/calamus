@@ -15,8 +15,8 @@ def test_simple_serialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
 
@@ -43,8 +43,8 @@ def test_simple_serialization_with_value_type():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
             add_value_types = True
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
@@ -79,8 +79,8 @@ def test_nested_reverse_serialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     class AuthorSchema(JsonLDSchema):
         _id = fields.Id()
@@ -88,8 +88,8 @@ def test_nested_reverse_serialization():
         books = fields.Nested(schema.author, BookSchema, reverse=True, many=True)
 
         class Meta:
-            class_type = schema.Person
-            mapped_type = Author
+            rdf_type = schema.Person
+            model = Author
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
     a = Author("http://example.com/authors/2", "Douglas Adams")

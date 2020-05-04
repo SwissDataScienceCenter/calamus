@@ -15,8 +15,8 @@ def test_simple_string_serialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     b = Book("http://example.com/books/1", "Hitchhikers Guide to the Galaxy")
 
@@ -40,8 +40,8 @@ def test_simple_string_deserialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     data = '{"@id": "http://example.com/books/1", "http://schema.org/name": "Hitchhikers Guide to the Galaxy", "@type": "http://schema.org/Book"}'
 

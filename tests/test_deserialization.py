@@ -15,8 +15,8 @@ def test_simple_deserialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     data = {
         "@id": "http://example.com/books/1",
@@ -43,8 +43,8 @@ def test_simple_deserialization_with_value_type():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
             add_value_types = True
 
     data = {
@@ -80,8 +80,8 @@ def test_nested_reverse_deserialization():
         name = fields.String(schema.name)
 
         class Meta:
-            class_type = schema.Book
-            mapped_type = Book
+            rdf_type = schema.Book
+            model = Book
 
     class AuthorSchema(JsonLDSchema):
         _id = fields.Id()
@@ -89,8 +89,8 @@ def test_nested_reverse_deserialization():
         books = fields.Nested(schema.author, BookSchema, reverse=True, many=True)
 
         class Meta:
-            class_type = schema.Person
-            mapped_type = Author
+            rdf_type = schema.Person
+            model = Author
 
     data = {
         "@id": "http://example.com/authors/2",

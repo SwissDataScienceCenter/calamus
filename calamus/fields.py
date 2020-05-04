@@ -159,12 +159,10 @@ class Nested(_JsonLDField, fields.Nested):
             self._schema = {"from": {}, "to": {}}
             for nest in self.nested:
                 if isinstance(nest, SchemaABC):
-                    class_type = str(nest.opts.class_type)
-                    mapped_type = nest.opts.mapped_type
-                    if not class_type or not mapped_type:
-                        raise ValueError(
-                            "Both class_type and mapped_type need to be set on the schema for nested to work"
-                        )
+                    rdf_type = str(nest.opts.rdf_type)
+                    model = nest.opts.model
+                    if not rdf_type or not model:
+                        raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
                     _schema = copy.copy(nest)
                     _schema.context.update(context)
                     # Respect only and exclude passed from parent and re-initialize fields
@@ -179,8 +177,8 @@ class Nested(_JsonLDField, fields.Nested):
                         original = _schema.exclude
                         _schema.exclude = set_class(self.exclude).union(original)
                     _schema._init_fields()
-                    self._schema["from"][class_type] = _schema
-                    self._schema["to"][mapped_type] = _schema
+                    self._schema["from"][rdf_type] = _schema
+                    self._schema["to"][model] = _schema
                 else:
                     if isinstance(nest, type) and issubclass(nest, SchemaABC):
                         schema_class = nest
@@ -194,13 +192,11 @@ class Nested(_JsonLDField, fields.Nested):
                     else:
                         schema_class = class_registry.get_class(nest)
 
-                    class_type = str(schema_class.opts.class_type)
-                    mapped_type = schema_class.opts.mapped_type
-                    if not class_type or not mapped_type:
-                        raise ValueError(
-                            "Both class_type and mapped_type need to be set on the schema for nested to work"
-                        )
-                    self._schema["from"][class_type] = schema_class(
+                    rdf_type = str(schema_class.opts.rdf_type)
+                    model = schema_class.opts.model
+                    if not rdf_type or not model:
+                        raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
+                    self._schema["from"][rdf_type] = schema_class(
                         many=False,
                         only=self.only,
                         exclude=self.exclude,
@@ -208,7 +204,7 @@ class Nested(_JsonLDField, fields.Nested):
                         load_only=self._nested_normalized_option("load_only"),
                         dump_only=self._nested_normalized_option("dump_only"),
                     )
-                    self._schema["to"][mapped_type] = self._schema["from"][class_type]
+                    self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
 
     def _serialize(self, nested_obj, attr, obj, many=False, **kwargs):
