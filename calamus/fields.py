@@ -26,6 +26,7 @@ import copy
 from uuid import uuid4
 
 import typing
+import types
 
 logger = logging.getLogger("calamus")
 
@@ -38,7 +39,21 @@ class IRI(object):
         self.name = name
 
     def __str__(self):
+        """Return expanded string for IRI."""
         return "{namespace}{name}".format(namespace=self.namespace, name=self.name)
+
+    def __repr__(self):
+        """Representation of IRI."""
+        return 'IRI(namespace="{namespace}", name="{name}")'.format(namespace=self.namespace, name=self.name)
+
+    def __eq__(self, other):
+        """Check equality between this and an other IRI."""
+        expanded = str(self)
+
+        if isinstance(other, IRI):
+            other = str(other)
+
+        return expanded == other
 
 
 class BlankNodeId(object):
@@ -84,6 +99,14 @@ class _JsonLDField(fields.Field):
     def data_key(self, value):
         pass
 
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, list) and len(value) == 1:
+            # single values can be single element lists in jsonld
+            value = value[0]
+        if isinstance(value, dict) and "@value" in value:
+            value = value["@value"]
+        return super()._deserialize(value, attr, data, **kwargs)
+
 
 class Id(fields.String):
     """A node identifier."""
@@ -113,11 +136,6 @@ class String(_JsonLDField, fields.String):
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#string"}
         return value
 
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, dict):
-            value = value["@value"]
-        return super()._deserialize(value, attr, data, **kwargs)
-
 
 class Integer(_JsonLDField, fields.Integer):
     """An integer field."""
@@ -130,11 +148,6 @@ class Integer(_JsonLDField, fields.Integer):
         if self.parent.opts.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#integer"}
         return value
-
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, dict):
-            value = value["@value"]
-        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class Float(_JsonLDField, fields.Float):
@@ -149,11 +162,6 @@ class Float(_JsonLDField, fields.Float):
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#float"}
         return value
 
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, dict):
-            value = value["@value"]
-        return super()._deserialize(value, attr, data, **kwargs)
-
 
 class DateTime(_JsonLDField, fields.DateTime):
     """A date/time field."""
@@ -167,11 +175,6 @@ class DateTime(_JsonLDField, fields.DateTime):
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
         return value
 
-    def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, dict):
-            value = value["@value"]
-        return super()._deserialize(value, attr, data, **kwargs)
-
 
 class Nested(_JsonLDField, fields.Nested):
     """A reference to one or more nested classes."""
@@ -181,6 +184,8 @@ class Nested(_JsonLDField, fields.Nested):
 
         if not isinstance(self.nested, list):
             self.nested = [self.nested]
+
+        self.nested = sorted(self.nested)
 
     @property
     def schema(self):
@@ -194,7 +199,7 @@ class Nested(_JsonLDField, fields.Nested):
             self._schema = {"from": {}, "to": {}}
             for nest in self.nested:
                 if isinstance(nest, SchemaABC):
-                    rdf_type = str(nest.opts.rdf_type)
+                    rdf_type = str(list(map(str, nest.opts.rdf_type)))
                     model = nest.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
@@ -227,7 +232,7 @@ class Nested(_JsonLDField, fields.Nested):
                     else:
                         schema_class = class_registry.get_class(nest)
 
-                    rdf_type = str(schema_class.opts.rdf_type)
+                    rdf_type = str(list(map(str, schema_class.opts.rdf_type)))
                     model = schema_class.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
@@ -242,27 +247,28 @@ class Nested(_JsonLDField, fields.Nested):
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
 
+    def _serialize_single_obj(self, obj, **kwargs):
+        """Deserializes a single (possibly flattened) object."""
+        if type(obj) not in self.schema["to"]:
+            ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
+        schema = self.schema["to"][type(obj)]
+        return schema.dump(obj)
+
     def _serialize(self, nested_obj, attr, obj, many=False, **kwargs):
-        # Load up the schema first. This allows a RegistryError to be raised
-        # if an invalid schema name was passed
+        """Deserialize a nested field with one or many values."""
         if nested_obj is None:
             return None
         many = self.many or many
         if many:
             result = []
             for obj in nested_obj:
-                if type(obj) not in self.schema["to"]:
-                    ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
-                schema = self.schema["to"][type(obj)]
-                result.append(schema.dump(obj))
+                result.append(self._serialize_single_obj(obj, **kwargs))
             return result
         else:
             if utils.is_collection(nested_obj):
                 raise ValueError("Expected single value for field {} but got a collection".format(self.name))
-            if type(nested_obj) not in self.schema["to"]:
-                ValueError("Type {} not found in field {}.{}".format(type(nested_obj), type(self.parent), self.name))
-            schema = self.schema["to"][type(nested_obj)]
-            return schema.dump(nested_obj)
+
+            return self._serialize_single_obj(nested_obj, **kwargs)
 
     def _test_collection(self, value, many=False):
         return  # getting a non list for a list field is valid in jsonld
@@ -276,18 +282,64 @@ class Nested(_JsonLDField, fields.Nested):
                     value = [value]
                 valid_data = []
                 for val in value:
-                    schema = self.schema["from"][val["@type"]]
+                    type_ = [val["@type"]] if not isinstance(val["@type"], list) else val["@type"]
+                    schema = self.schema["from"][str(type_)]
                     if not schema:
                         ValueError("Type {} not found in {}.{}".format(val["@type"], type(self.parent), self.data_key))
                     valid_data.append(schema.load(val, unknown=self.unknown, partial=partial))
             else:
-                schema = self.schema["from"][value["@type"]]
+                if utils.is_collection(value):
+                    # single values can be single element lists in jsonld
+                    if len(value) > 1:
+                        raise ValueError(
+                            "Got multiple values for nested field {name} but many is not set.".format(name=self.name)
+                        )
+                    else:
+                        value = value[0]
+
+                type_ = [value["@type"]] if not isinstance(value["@type"], list) else value["@type"]
+
+                schema = self.schema["from"][str(type_)]
                 if not schema:
                     ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
                 valid_data = schema.load(value, unknown=self.unknown, partial=partial)
         except ValidationError as error:
             raise ValidationError(error.messages, valid_data=error.valid_data) from error
         return valid_data
+
+    def _dereference_single_id(self, value, attr, **kwargs):
+        """Dereference a single id."""
+        data = kwargs["_all_objects"].get(value, None)
+        if not data:
+            raise ValueError("Couldn't dereference id {id}".format(id=value))
+
+        if self.reverse:
+            # we need to remove the property from the child when handling reverse nesting
+            del data[attr]
+
+        return data
+
+    def _dereference_flattened(self, value, attr, **kwargs):
+        """Dereference an id or a list of ids."""
+        if isinstance(value, list) or isinstance(value, types.GeneratorType):
+            return [self._dereference_flattened(i, attr, **kwargs) for i in value]
+        if isinstance(value, str):
+            return self._dereference_single_id(value, attr, **kwargs)
+        elif isinstance(value, dict):
+            if len(value.keys()) == 1 and "@id" in value:
+                return self._dereference_single_id(value["@id"], attr, **kwargs)
+            else:
+                return value
+        else:
+            raise ValueError("Nested field needs to be a dict or an id entry/list, got {value}".format(value=value))
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        """Deserialize nested object."""
+        if "flattened" in kwargs and kwargs["flattened"]:
+            # could be id references, dereference them to continue deserialization
+            value = self._dereference_flattened(value, attr, **kwargs)
+
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class List(_JsonLDField, fields.List):

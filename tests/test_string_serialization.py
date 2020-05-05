@@ -43,7 +43,7 @@ def test_simple_string_serialization():
 
     assert '"@id": "http://example.com/books/1"' in jsonld
     assert '"http://schema.org/name": "Hitchhikers Guide to the Galaxy"' in jsonld
-    assert '"@type": "http://schema.org/Book"' in jsonld
+    assert '"@type": ["http://schema.org/Book"]' in jsonld
 
 
 def test_simple_string_deserialization():

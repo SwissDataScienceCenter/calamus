@@ -42,7 +42,12 @@ class JsonLDSchemaOpts(SchemaOpts):
 
     def __init__(self, meta, *args, **kwargs):
         super().__init__(meta, *args, **kwargs)
+
         self.rdf_type = getattr(meta, "rdf_type", None)
+        if not isinstance(self.rdf_type, list):
+            self.rdf_type = [self.rdf_type]
+        self.rdf_type = sorted(self.rdf_type)
+
         self.model = getattr(meta, "model", None)
         self.add_value_types = getattr(meta, "add_value_types", False)
 
@@ -76,7 +81,8 @@ class JsonLDSchema(Schema):
         dump_only=(),
         partial=False,
         unknown=None,
-        flattened=False
+        flattened=False,
+        _all_objects=None,
     ):
         super().__init__(
             *args,
@@ -87,10 +93,11 @@ class JsonLDSchema(Schema):
             load_only=load_only,
             dump_only=dump_only,
             partial=partial,
-            unknown=unknown
+            unknown=unknown,
         )
 
         self.flattened = flattened
+        self._all_objects = _all_objects
 
         if not self.opts.rdf_type or not self.opts.model:
             raise ValueError("rdf_type and model have to be set on the Meta of schema {}".format(type(self)))
@@ -129,6 +136,38 @@ class JsonLDSchema(Schema):
 
         return ret
 
+    def get_reverse_links(self, data: typing.Mapping[str, typing.Any], field_name: str):
+        """Get all objects pointing to the object in data with the field fieldname.
+
+        Used for unflattening a list.
+        """
+        ret = []
+
+        for d in self._all_objects.values():
+            if field_name not in d:
+                continue
+
+            if self._compare_ids(d[field_name], data["@id"]):
+                ret.append(d["@id"])
+
+        return ret
+
+    def _compare_ids(self, first, second):
+        """Compare if two ids or lists of ids match."""
+        if not isinstance(first, list):
+            first = [first]
+        if not isinstance(second, list):
+            second = [second]
+
+        # remove wrapped ids
+        first = [i["@id"] if isinstance(i, dict) else i for i in first]
+        second = [i["@id"] if isinstance(i, dict) else i for i in second]
+
+        first = set(str(id_) for id_ in first)
+        second = set(str(id_) for id_ in second)
+
+        return first & second == first | second
+
     def _deserialize(
         self,
         data: typing.Union[typing.Mapping[str, typing.Any], typing.Iterable[typing.Mapping[str, typing.Any]],],
@@ -137,13 +176,24 @@ class JsonLDSchema(Schema):
         many: bool = False,
         partial=False,
         unknown=RAISE,
-        index=None
+        index=None,
     ) -> typing.Union[_T, typing.List[_T]]:
         index_errors = self.opts.index_errors
         index = index if index_errors else None
 
-        if self.flattened:
-            data = jsonld.expand(data)
+        if self.flattened and is_collection(data) and not self._all_objects:
+            new_data = []
+            self._all_objects = {}
+
+            for d in data:
+                self._all_objects[d["@id"]] = d
+
+                if self._compare_ids(d["@type"], self.opts.rdf_type):
+                    new_data.append(d)
+            data = new_data
+
+            if len(data) == 1:
+                data = data[0]
 
         if many:
             if not is_collection(data):
@@ -182,6 +232,12 @@ class JsonLDSchema(Schema):
                     raw_value = data.get("@reverse", missing)
                     if raw_value is not missing:
                         raw_value = raw_value.get(field_name, missing)
+                    elif self.flattened:
+                        # find an object that refers to this one with the same property
+                        raw_value = self.get_reverse_links(data, field_name)
+
+                        if not raw_value:
+                            raw_value = missing
                 else:
                     raw_value = data.get(field_name, missing)
 
@@ -189,6 +245,7 @@ class JsonLDSchema(Schema):
                     # Ignore missing field if we're allowed to.
                     if partial is True or (partial_is_collection and attr_name in partial):
                         continue
+
                 d_kwargs = {}
                 # Allow partial loading of nested schemas.
                 if partial_is_collection:
@@ -198,6 +255,9 @@ class JsonLDSchema(Schema):
                     d_kwargs["partial"] = sub_partial
                 else:
                     d_kwargs["partial"] = partial
+
+                d_kwargs["_all_objects"] = self._all_objects
+                d_kwargs["flattened"] = self.flattened
                 getter = lambda val: field_obj.deserialize(val, field_name, data, **d_kwargs)
                 value = self._call_and_store(
                     getter_func=getter, data=raw_value, field_name=field_name, error_store=error_store, index=index,
@@ -222,11 +282,13 @@ class JsonLDSchema(Schema):
                         error_store.store_error(
                             [self.error_messages["unknown"]], key, (index if index_errors else None),
                         )
+
         return ret
 
     @post_load
     def make_instance(self, data, **kwargs):
         """Transform loaded dict into corresponding object."""
+
         const_args = inspect.signature(self.opts.model)
         keys = set(data.keys())
         args = []
