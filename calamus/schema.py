@@ -17,8 +17,7 @@
 # limitations under the License.
 """Marshmallow schema implementation that supports Json-LD."""
 
-from marshmallow.schema import Schema, SchemaMeta, SchemaOpts
-from marshmallow.fields import Field
+from marshmallow.schema import Schema, SchemaOpts
 from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE, INCLUDE
 from marshmallow import post_load
 from collections.abc import Mapping

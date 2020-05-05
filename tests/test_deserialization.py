@@ -17,6 +17,8 @@
 # limitations under the License.
 """Tests for deserialization from python dicts."""
 
+import pytest
+
 import calamus.fields as fields
 from calamus.schema import JsonLDSchema
 
@@ -80,7 +82,38 @@ def test_simple_deserialization_with_value_type():
     assert book.name == "Hitchhikers Guide to the Galaxy"
 
 
-def test_nested_reverse_deserialization():
+@pytest.mark.parametrize(
+    "data",
+    [
+        {
+            "@id": "http://example.com/authors/2",
+            "@reverse": {
+                "http://schema.org/author": [
+                    {
+                        "@id": "http://example.com/books/1",
+                        "@type": "http://schema.org/Book",
+                        "http://schema.org/name": "Hitchhikers " "Guide " "to the " "Galaxy",
+                    }
+                ]
+            },
+            "@type": "http://schema.org/Person",
+            "http://schema.org/name": "Douglas Adams",
+        },
+        {
+            "@id": "http://example.com/authors/2",
+            "@reverse": {
+                "http://schema.org/author": {
+                    "@id": "http://example.com/books/1",
+                    "@type": "http://schema.org/Book",
+                    "http://schema.org/name": "Hitchhikers " "Guide " "to the " "Galaxy",
+                }
+            },
+            "@type": "http://schema.org/Person",
+            "http://schema.org/name": "Douglas Adams",
+        },
+    ],
+)
+def test_nested_reverse_deserialization(data):
     class Book:
         def __init__(self, _id, name):
             self._id = _id
@@ -110,21 +143,6 @@ def test_nested_reverse_deserialization():
         class Meta:
             rdf_type = schema.Person
             model = Author
-
-    data = {
-        "@id": "http://example.com/authors/2",
-        "@reverse": {
-            "http://schema.org/author": [
-                {
-                    "@id": "http://example.com/books/1",
-                    "@type": "http://schema.org/Book",
-                    "http://schema.org/name": "Hitchhikers " "Guide " "to the " "Galaxy",
-                }
-            ]
-        },
-        "@type": "http://schema.org/Person",
-        "http://schema.org/name": "Douglas Adams",
-    }
 
     author = AuthorSchema().load(data)
 

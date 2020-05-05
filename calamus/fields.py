@@ -265,15 +265,15 @@ class Nested(_JsonLDField, fields.Nested):
             return schema.dump(nested_obj)
 
     def _test_collection(self, value, many=False):
-        many = self.many or many
-        if many and not utils.is_collection(value):
-            raise self.make_error("type", input=value, type=value.__class__.__name__)
+        return  # getting a non list for a list field is valid in jsonld
 
     def _load(self, value, data, partial=None, many=False):
         many = self.many or many
 
         try:
             if many:
+                if not utils.is_collection(value):
+                    value = [value]
                 valid_data = []
                 for val in value:
                     schema = self.schema["from"][val["@type"]]
