@@ -23,6 +23,7 @@ from marshmallow import class_registry, utils
 from marshmallow.exceptions import ValidationError
 import logging
 import copy
+from uuid import uuid4
 
 import typing
 
@@ -38,6 +39,18 @@ class IRI(object):
 
     def __str__(self):
         return "{namespace}{name}".format(namespace=self.namespace, name=self.name)
+
+
+class BlankNodeId(object):
+    """ Represent an IRI in a namespace."""
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def __str__(self):
+        if self.name:
+            return "_:{name}".format(name=self.name)
+        return "_:{uuid}".format(uuid=uuid4)
 
 
 class Namespace(object):
@@ -171,7 +184,10 @@ class Nested(_JsonLDField, fields.Nested):
 
     @property
     def schema(self):
-        """The nested Schema object. """
+        """The nested Schema object.
+
+        This method was copied from marshmallow and modified to support multiple different nested schemas.
+        """
         if not self._schema:
             # Inherit context from parent.
             context = getattr(self.parent, "context", {})
