@@ -75,7 +75,8 @@ class JsonLDSchema(Schema):
         load_only=(),
         dump_only=(),
         partial=False,
-        unknown=None
+        unknown=None,
+        flattened=False
     ):
         super().__init__(
             *args,
@@ -88,6 +89,8 @@ class JsonLDSchema(Schema):
             partial=partial,
             unknown=unknown
         )
+
+        self.flattened = flattened
 
         if not self.opts.rdf_type or not self.opts.model:
             raise ValueError("rdf_type and model have to be set on the Meta of schema {}".format(type(self)))
@@ -121,6 +124,9 @@ class JsonLDSchema(Schema):
         else:
             ret["@type"] = str(rdf_type)
 
+        if self.flattened:
+            ret = jsonld.flatten(ret)
+
         return ret
 
     def _deserialize(
@@ -135,6 +141,10 @@ class JsonLDSchema(Schema):
     ) -> typing.Union[_T, typing.List[_T]]:
         index_errors = self.opts.index_errors
         index = index if index_errors else None
+
+        if self.flattened:
+            data = jsonld.expand(data)
+
         if many:
             if not is_collection(data):
                 error_store.store_error([self.error_messages["type"]], index=index)
@@ -216,6 +226,7 @@ class JsonLDSchema(Schema):
 
     @post_load
     def make_instance(self, data, **kwargs):
+        """Transform loaded dict into corresponding object."""
         const_args = inspect.signature(self.opts.model)
         keys = set(data.keys())
         args = []
