@@ -39,7 +39,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.7"
+python = "^3.6"
 marshmallow = "^3.5.1"
 pyld = "^2.0.2"
 
