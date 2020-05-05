@@ -28,6 +28,8 @@ from uuid import uuid4
 import typing
 import types
 
+from calamus.utils import normalize_type, normalize_value
+
 logger = logging.getLogger("calamus")
 
 
@@ -100,11 +102,7 @@ class _JsonLDField(fields.Field):
         pass
 
     def _deserialize(self, value, attr, data, **kwargs):
-        if isinstance(value, list) and len(value) == 1:
-            # single values can be single element lists in jsonld
-            value = value[0]
-        if isinstance(value, dict) and "@value" in value:
-            value = value["@value"]
+        value = normalize_value(value)
         return super()._deserialize(value, attr, data, **kwargs)
 
 
@@ -199,7 +197,7 @@ class Nested(_JsonLDField, fields.Nested):
             self._schema = {"from": {}, "to": {}}
             for nest in self.nested:
                 if isinstance(nest, SchemaABC):
-                    rdf_type = str(list(map(str, nest.opts.rdf_type)))
+                    rdf_type = str(normalize_type(nest.opts.rdf_type))
                     model = nest.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
@@ -232,7 +230,7 @@ class Nested(_JsonLDField, fields.Nested):
                     else:
                         schema_class = class_registry.get_class(nest)
 
-                    rdf_type = str(list(map(str, schema_class.opts.rdf_type)))
+                    rdf_type = str(normalize_type(schema_class.opts.rdf_type))
                     model = schema_class.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
@@ -251,6 +249,7 @@ class Nested(_JsonLDField, fields.Nested):
         """Deserializes a single (possibly flattened) object."""
         if type(obj) not in self.schema["to"]:
             ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
+
         schema = self.schema["to"][type(obj)]
         return schema.dump(obj)
 
@@ -273,6 +272,15 @@ class Nested(_JsonLDField, fields.Nested):
     def _test_collection(self, value, many=False):
         return  # getting a non list for a list field is valid in jsonld
 
+    def load_single_entry(self, value, partial):
+        """Loads a single nested entry from its schema."""
+        type_ = normalize_type(value["@type"])
+
+        schema = self.schema["from"][str(type_)]
+        if not schema:
+            ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
+        return schema.load(value, unknown=self.unknown, partial=partial)
+
     def _load(self, value, data, partial=None, many=False):
         many = self.many or many
 
@@ -282,11 +290,7 @@ class Nested(_JsonLDField, fields.Nested):
                     value = [value]
                 valid_data = []
                 for val in value:
-                    type_ = [val["@type"]] if not isinstance(val["@type"], list) else val["@type"]
-                    schema = self.schema["from"][str(type_)]
-                    if not schema:
-                        ValueError("Type {} not found in {}.{}".format(val["@type"], type(self.parent), self.data_key))
-                    valid_data.append(schema.load(val, unknown=self.unknown, partial=partial))
+                    valid_data.append(self.load_single_entry(val, partial))
             else:
                 if utils.is_collection(value):
                     # single values can be single element lists in jsonld
@@ -297,12 +301,8 @@ class Nested(_JsonLDField, fields.Nested):
                     else:
                         value = value[0]
 
-                type_ = [value["@type"]] if not isinstance(value["@type"], list) else value["@type"]
+                valid_data = self.load_single_entry(value, partial)
 
-                schema = self.schema["from"][str(type_)]
-                if not schema:
-                    ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
-                valid_data = schema.load(value, unknown=self.unknown, partial=partial)
         except ValidationError as error:
             raise ValidationError(error.messages, valid_data=error.valid_data) from error
         return valid_data

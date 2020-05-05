@@ -29,6 +29,8 @@ import inspect
 
 import typing
 
+from calamus.utils import normalize_id, normalize_type
+
 _T = typing.TypeVar("_T")
 
 
@@ -126,10 +128,7 @@ class JsonLDSchema(Schema):
         if not rdf_type:
             raise ValueError("No class type specified for schema")
 
-        if isinstance(rdf_type, list):
-            ret["@type"] = [str(t) for t in rdf_type]
-        else:
-            ret["@type"] = str(rdf_type)
+        ret["@type"] = normalize_type(rdf_type)
 
         if self.flattened:
             ret = jsonld.flatten(ret)
@@ -154,17 +153,9 @@ class JsonLDSchema(Schema):
 
     def _compare_ids(self, first, second):
         """Compare if two ids or lists of ids match."""
-        if not isinstance(first, list):
-            first = [first]
-        if not isinstance(second, list):
-            second = [second]
 
-        # remove wrapped ids
-        first = [i["@id"] if isinstance(i, dict) else i for i in first]
-        second = [i["@id"] if isinstance(i, dict) else i for i in second]
-
-        first = set(str(id_) for id_ in first)
-        second = set(str(id_) for id_ in second)
+        first = set(normalize_id(first))
+        second = set(normalize_id(second))
 
         return first & second == first | second
 
