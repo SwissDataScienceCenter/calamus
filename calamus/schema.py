@@ -17,7 +17,7 @@
 # limitations under the License.
 """Marshmallow schema implementation that supports JSON-LD."""
 
-from marshmallow.schema import Schema, SchemaOpts
+from marshmallow.schema import Schema, SchemaMeta, SchemaOpts
 from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE, INCLUDE
 from marshmallow import post_load
 from collections.abc import Mapping
@@ -49,14 +49,32 @@ class JsonLDSchemaOpts(SchemaOpts):
 
         self.rdf_type = getattr(meta, "rdf_type", None)
         if not isinstance(self.rdf_type, list):
-            self.rdf_type = [self.rdf_type]
+            self.rdf_type = [self.rdf_type] if self.rdf_type else []
         self.rdf_type = sorted(self.rdf_type)
 
         self.model = getattr(meta, "model", None)
         self.add_value_types = getattr(meta, "add_value_types", False)
 
 
-class JsonLDSchema(Schema):
+class JsonLDSchemaMeta(SchemaMeta):
+    """Meta-class for a for a JsonLDSchema class."""
+
+    def __new__(mcs, name, bases, attrs):
+        klass = super().__new__(mcs, name, bases, attrs)
+
+        # Include rdf_type of all parent schemas
+        for base in bases:
+            if hasattr(base, "opts"):
+                rdf_type = getattr(base.opts, "rdf_type", [])
+                if rdf_type:
+                    klass.opts.rdf_type.extend(rdf_type)
+
+        klass.opts.rdf_type = sorted(set(klass.opts.rdf_type))
+
+        return klass
+
+
+class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
     """Schema for a JsonLD class.
 
     Example:
@@ -106,6 +124,7 @@ class JsonLDSchema(Schema):
 
         self.flattened = flattened
         self._all_objects = _all_objects
+        self._init_names_mapping = {}
 
         if not self.opts.rdf_type or not self.opts.model:
             raise ValueError("rdf_type and model have to be set on the Meta of schema {}".format(type(self)))
@@ -220,6 +239,8 @@ class JsonLDSchema(Schema):
             if data.get("@context", None):
                 # we got compacted jsonld, expand it
                 data = jsonld.expand(data)
+                if isinstance(data, list):
+                    data = data[0]
 
             partial_is_collection = is_collection(partial)
             for attr_name, field_obj in self.load_fields.items():
@@ -280,11 +301,20 @@ class JsonLDSchema(Schema):
                             [self.error_messages["unknown"]], key, (index if index_errors else None),
                         )
 
+        self._init_names_mapping = {
+            field_name: field_obj.init_name for field_name, field_obj in self.load_fields.items() if field_obj.init_name
+        }
+
         return ret
 
     @post_load
     def make_instance(self, data, **kwargs):
         """Transform loaded dict into corresponding object."""
+
+        for old_key, new_key in self._init_names_mapping.items():
+            if new_key in data:
+                raise ValueError("Initialization name {} for {} is already in data {}".format(new_key, old_key, data))
+            data[new_key] = data.pop(old_key, None)
 
         const_args = inspect.signature(self.opts.model)
         keys = set(data.keys())
