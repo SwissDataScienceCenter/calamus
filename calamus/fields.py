@@ -184,6 +184,19 @@ class Float(_JsonLDField, fields.Float):
         return value
 
 
+class Boolean(_JsonLDField, fields.Boolean):
+    """A boolean field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#boolean"}
+        return value
+
+
 class DateTime(_JsonLDField, fields.DateTime):
     """A date/time field."""
 
