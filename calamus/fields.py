@@ -59,7 +59,7 @@ class IRI(object):
 
 
 class BlankNodeId(object):
-    """ Represent an IRI in a namespace."""
+    """ A blank/anonymous node identifier."""
 
     def __init__(self, name=None):
         self.name = name

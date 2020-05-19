@@ -39,9 +39,14 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.6.1"
 marshmallow = "^3.5.1"
 pyld = "^2.0.2"
+sphinx = {version = "^3.0.3", optional = true}
+sphinx-rtd-theme = {version = "^0.4.3", optional = true}
+
+[tool.poetry.extras]
+docs = ["sphinx", "sphinx-rtd-theme"]
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

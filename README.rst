@@ -23,6 +23,13 @@
  calamus: Json-LD Serialization Libary for Python
 ==================================================
 
+.. image:: https://readthedocs.org/projects/calamus/badge/?version=latest
+   :target: https://calamus.readthedocs.io/en/latest/en/latest/?badge=latest
+   :alt: Documentation Status
+
+.. image:: https://github.com/SwissDataScienceCenter/calamus/workflows/Test,%20Integration%20Tests%20and%20Deploy/badge.svg
+   :target: https://github.com/SwissDataScienceCenter/calamus/actions?query=workflow%3A%22Test%2C+Integration+Tests+and+Deploy%22+branch%3Amaster
+
 calamus is a library built on top of marshmallow to allow (de-)Serialization
 of Python classes to Json-LD
 
