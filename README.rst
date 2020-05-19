@@ -16,7 +16,6 @@
     limitations under the License.
 
 .. image:: https://github.com/SwissDataScienceCenter/calamus/blob/master/docs/reed.png?raw=true
-   :scale: 50
    :align: center
 
 ==================================================
