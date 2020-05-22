@@ -44,6 +44,7 @@ marshmallow = "^3.5.1"
 pyld = "^2.0.2"
 sphinx = {version = "^3.0.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
+sphinxcontrib-spelling = {version = "^5.0.0", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
@@ -53,7 +54,7 @@ flake8 = "^3.7.9"
 pytest-black = "^0.3.9"
 
 [tool.poetry.extras]
-docs = ["sphinx", "sphinx-rtd-theme"]
+docs = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [tool.black]
 line-length = 120

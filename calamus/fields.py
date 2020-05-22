@@ -189,7 +189,7 @@ class Nested(_JsonLDField, fields.Nested):
     def schema(self):
         """The nested Schema object.
 
-        This method was copied from marshmallow and modified to support multiple different nested schemas.
+        This method was copied from marshmallow and modified to support multiple different nested schemes.
         """
         if not self._schema:
             # Inherit context from parent.

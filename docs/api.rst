@@ -28,7 +28,7 @@ Fields
 .. automodule:: calamus.fields
    :members:
 
-Utils
------
+Utilities
+---------
 .. automodule:: calamus.utils
    :members:

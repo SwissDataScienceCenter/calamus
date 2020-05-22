@@ -19,7 +19,7 @@
    :align: center
 
 ==================================================
- calamus: Json-LD Serialization Libary for Python
+ calamus: Json-LD Serialization Library for Python
 ==================================================
 
 .. image:: https://readthedocs.org/projects/calamus/badge/?version=latest
@@ -59,7 +59,7 @@ Assuming you have a class like
             self._id = _id
             self.name = name
 
-Declare schemas
+Declare schemes
 ---------------
 You can declare a schema for serialization like
 ::

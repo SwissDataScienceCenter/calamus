@@ -142,7 +142,7 @@ class JsonLDSchema(Schema):
         return ret
 
     def get_reverse_links(self, data: typing.Mapping[str, typing.Any], field_name: str):
-        """Get all objects pointing to the object in data with the field fieldname.
+        """Get all objects pointing to the object in data with the field field_name.
 
         Used for unflattening a list.
         """
@@ -244,7 +244,7 @@ class JsonLDSchema(Schema):
                         continue
 
                 d_kwargs = {}
-                # Allow partial loading of nested schemas.
+                # Allow partial loading of nested schemes.
                 if partial_is_collection:
                     prefix = field_name + "."
                     len_prefix = len(prefix)
