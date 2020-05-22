@@ -31,6 +31,7 @@ import rdflib
 import typing
 import types
 
+from calamus.schema import JsonLDSchema
 from calamus.utils import normalize_type, normalize_value, ONTOLOGY_QUERY, Proxy
 
 logger = logging.getLogger("calamus")
@@ -121,6 +122,7 @@ class _JsonLDField(fields.Field):
         self.reverse = kwargs.get("reverse", False)
         self.init_name = kwargs.get("init_name", None)
         self.add_value_types = kwargs.get("add_value_types", False)
+        self.default = kwargs.get("default", None)
 
     @property
     def data_key(self):
@@ -297,6 +299,19 @@ class Nested(_JsonLDField, fields.Nested):
         if not isinstance(self.nested, list):
             self.nested = [self.nested]
 
+        nested = []
+
+        for n in self.nested:
+            if issubclass(n, JsonLDSchema):
+                nested.append(n)
+            else:
+                if hasattr(n, "__calamus_schema__"):
+                    nested.append(n.__calamus_schema__)
+                else:
+                    raise ValueError(f"Only calamus schema is allowed in nested fields, not {n}")
+
+        self.nested = nested
+
     @property
     def schema(self):
         """The nested Schema object.
@@ -334,7 +349,7 @@ class Nested(_JsonLDField, fields.Nested):
                     if isinstance(nest, type) and issubclass(nest, SchemaABC):
                         schema_class = nest
                     elif not isinstance(nest, (str, bytes)):
-                        raise ValueError("Nested fields must be passed a " "Schema, not {}.".format(nest.__class__))
+                        raise ValueError("Nested fields must be passed a Schema, not {}.".format(nest.__class__))
                     elif nest == "self":
                         ret = self
                         while not isinstance(ret, SchemaABC):

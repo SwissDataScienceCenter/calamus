@@ -28,8 +28,8 @@ import rdflib
 from pyld import jsonld
 
 import inspect
-
 import typing
+from functools import lru_cache
 
 from calamus.utils import normalize_id, normalize_type, Proxy, validate_field_properties
 
@@ -497,3 +497,78 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             )
 
         return instance
+
+
+class JsonLDAnnotation(type):
+    """Meta-class allowing automated generation of calamus schema based on annotations.
+
+    Example:
+
+    .. code-block:: python
+
+       import datetime.datetime as dt
+
+       from calamus import JsonLDAnnotation
+       import calamus.fields as fields
+
+       schema = fields.Namespace("http://schema.org/")
+
+       class User(metaclass=JsonLDAnnotation):
+           class Meta:
+               rdf_type = schema.Person
+           _id = fields.Id()
+           birth_date = fields.Date(schema.birthDate, default=dt.now)
+           name = fields.String(schema.name, default=lambda: "John")
+
+        user = User()
+
+        # dumping
+        User.schema().dump(user)
+        # or
+        user.dump()
+
+        # loading
+        u = User.schema().load({"_id": "http://example.com/user/1", "name": "Bill", "birth_date": "1970-01-01 00:00"})
+    """
+
+    def __new__(mcs, name, bases, namespace, **kwargs):
+        import calamus.fields as fields
+
+        attribute_dict = {}
+        for attr_name, value in namespace.copy().items():
+            if isinstance(value, fields._JsonLDField):
+                attribute_dict[attr_name] = value
+
+                if hasattr(value, "default"):
+                    if callable(value.default):
+                        namespace[attr_name] = value.default()
+                    else:
+                        namespace[attr_name] = value.default
+                else:
+                    del namespace[attr_name]
+
+        if "Meta" not in namespace or not hasattr(namespace["Meta"], "rdf_type"):
+            raise ValueError("Setting 'rdf_type' on the `class Meta` is required for calamus annotations")
+
+        attribute_dict["Meta"] = type("Meta", (), {"rdf_type": namespace["Meta"].rdf_type})
+        namespace["__calamus_schema__"] = type(f"{name}Schema", (JsonLDSchema,), attribute_dict)
+
+        @lru_cache(maxsize=5)
+        def schema(*args, **kwargs):
+            """Convenience method to access calamus schema of a class."""
+            return namespace["__calamus_schema__"](*args, **kwargs)
+
+        namespace[schema.__name__] = schema
+
+        def dump(self, *args, **kwargs):
+            """Convenience method to dump object directly."""
+            return type(self).schema(*args, **kwargs).dump(self)
+
+        namespace[dump.__name__] = dump
+
+        cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+
+        namespace["__calamus_schema__"].Meta.model = cls
+        namespace["__calamus_schema__"].opts.model = cls
+
+        return cls
