@@ -36,10 +36,12 @@ _T = typing.TypeVar("_T")
 
 class JsonLDSchemaOpts(SchemaOpts):
     """Options class for `JsonLDSchema`.
+
     Adds the following options:
-    - ``rdf_type``: The RDF type(s) for this schema.
-    - ``model``: The python type this schema (de-)serializes.
-    - ``add_value_types``: Whether to add ``@type`` information to scalar field values.
+        - ``rdf_type``: The RDF type(s) for this schema.
+        - ``model``: The python type this schema (de-)serializes.
+        - ``add_value_types``: Whether to add ``@type`` information to scalar field values.
+
     """
 
     def __init__(self, meta, *args, **kwargs):
@@ -56,18 +58,22 @@ class JsonLDSchemaOpts(SchemaOpts):
 
 class JsonLDSchema(Schema):
     """Schema for a JsonLD class.
-    Example: ::
-        from calamus import JsonLDSchema
-        import calamus.fields as fields
-        from mymodels import User
-        schema = fields.Namespace("http://schema.org/")
-        class UserSchema(JsonLDSchema):
-            class Meta:
-                rdf_type = schema.Person
-                model = User
-            _id = fields.Id()
-            birth_date = fields.Date(schema.birthDate)
-            name = fields.String(schema.name)
+
+    Example:
+
+    .. code-block:: python
+
+       from calamus import JsonLDSchema
+       import calamus.fields as fields
+       from mymodels import User
+       schema = fields.Namespace("http://schema.org/")
+       class UserSchema(JsonLDSchema):
+           class Meta:
+               rdf_type = schema.Person
+               model = User
+           _id = fields.Id()
+           birth_date = fields.Date(schema.birthDate)
+           name = fields.String(schema.name)
     """
 
     OPTIONS_CLASS = JsonLDSchemaOpts
@@ -136,7 +142,7 @@ class JsonLDSchema(Schema):
         return ret
 
     def get_reverse_links(self, data: typing.Mapping[str, typing.Any], field_name: str):
-        """Get all objects pointing to the object in data with the field fieldname.
+        """Get all objects pointing to the object in data with the field field_name.
 
         Used for unflattening a list.
         """
@@ -238,7 +244,7 @@ class JsonLDSchema(Schema):
                         continue
 
                 d_kwargs = {}
-                # Allow partial loading of nested schemas.
+                # Allow partial loading of nested schemes.
                 if partial_is_collection:
                     prefix = field_name + "."
                     len_prefix = len(prefix)

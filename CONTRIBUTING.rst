@@ -1,3 +1,20 @@
+..
+    Copyright 2017-2020 - Swiss Data Science Center (SDSC)
+    A partnership between École Polytechnique Fédérale de Lausanne (EPFL) and
+    Eidgenössische Technische Hochschule Zürich (ETHZ).
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
 Contributing
 ============
 
@@ -45,7 +62,7 @@ Write Documentation
 ~~~~~~~~~~~~~~~~~~~
 
 calamus could always use more documentation, whether as part of the
-official calamus docs, in docstrings, or even on the web in blog posts,
+official calamus docs, in doc strings, or even on the web in blog posts,
 articles, and such.
 
 Submit Feedback
@@ -101,14 +118,14 @@ encourage usage of `poetry`:
 
       $ black
 
-   You may want to set up yapf_ styling as a pre-commit hook to do this
+   You may want to set up black_ styling as a pre-commit hook to do this
    automatically:
 
    .. code-block:: console
 
       $ poetry run pre-commit install
 
-   .. _yapf: https://github.com/psf/black
+   .. _black: https://github.com/psf/black
 
 6. Commit your changes and push your branch to GitHub:
 
@@ -158,7 +175,7 @@ Before you submit a pull request, check that it meets these guidelines:
 
 * Make sure you agree with the license and follow the legal_ matter.
 * The pull request should include tests and must not decrease test coverage.
-* If the pull request adds functionality, the docs should be updated. Put your new functionality into a function with a docstring.
+* If the pull request adds functionality, the docs should be updated. Put your new functionality into a function with a doc string.
 * The pull request should work for Python 3.6, 3.7 and 3.8. Check GitHub action builds and make sure that the tests pass for all supported Python versions.
 
 .. _legal: (https://github.com/SwissDataScienceCenter/documentation/wiki/Legal-matter)

@@ -16,12 +16,18 @@
     limitations under the License.
 
 .. image:: https://github.com/SwissDataScienceCenter/calamus/blob/master/docs/reed.png?raw=true
-   :scale: 50
    :align: center
 
 ==================================================
- calamus: Json-LD Serialization Libary for Python
+ calamus: Json-LD Serialization Library for Python
 ==================================================
+
+.. image:: https://readthedocs.org/projects/calamus/badge/?version=latest
+   :target: https://calamus.readthedocs.io/en/latest/en/latest/?badge=latest
+   :alt: Documentation Status
+
+.. image:: https://github.com/SwissDataScienceCenter/calamus/workflows/Test,%20Integration%20Tests%20and%20Deploy/badge.svg
+   :target: https://github.com/SwissDataScienceCenter/calamus/actions?query=workflow%3A%22Test%2C+Integration+Tests+and+Deploy%22+branch%3Amaster
 
 calamus is a library built on top of marshmallow to allow (de-)Serialization
 of Python classes to Json-LD
@@ -53,7 +59,7 @@ Assuming you have a class like
             self._id = _id
             self.name = name
 
-Declare schemas
+Declare schemes
 ---------------
 You can declare a schema for serialization like
 ::

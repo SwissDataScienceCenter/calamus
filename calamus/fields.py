@@ -59,7 +59,7 @@ class IRI(object):
 
 
 class BlankNodeId(object):
-    """ Represent an IRI in a namespace."""
+    """ A blank/anonymous node identifier."""
 
     def __init__(self, name=None):
         self.name = name
@@ -189,7 +189,7 @@ class Nested(_JsonLDField, fields.Nested):
     def schema(self):
         """The nested Schema object.
 
-        This method was copied from marshmallow and modified to support multiple different nested schemas.
+        This method was copied from marshmallow and modified to support multiple different nested schemes.
         """
         if not self._schema:
             # Inherit context from parent.
