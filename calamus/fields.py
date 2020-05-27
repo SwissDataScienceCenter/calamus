@@ -17,6 +17,7 @@
 # limitations under the License.
 """Marshmallow fields for use with Json-LD."""
 
+import lazy_object_proxy
 import marshmallow.fields as fields
 from marshmallow.base import SchemaABC
 from marshmallow import class_registry, utils
@@ -241,6 +242,7 @@ class Nested(_JsonLDField, fields.Nested):
                         context=context,
                         load_only=self._nested_normalized_option("load_only"),
                         dump_only=self._nested_normalized_option("dump_only"),
+                        lazy=self.parent.lazy,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
@@ -277,8 +279,12 @@ class Nested(_JsonLDField, fields.Nested):
         type_ = normalize_type(value["@type"])
 
         schema = self.schema["from"][str(type_)]
+
         if not schema:
             ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
+
+        if schema.lazy:
+            return lazy_object_proxy.Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial))
         return schema.load(value, unknown=self.unknown, partial=partial)
 
     def _load(self, value, data, partial=None, many=False):
@@ -335,7 +341,10 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _deserialize(self, value, attr, data, **kwargs):
         """Deserialize nested object."""
-        if "flattened" in kwargs and kwargs["flattened"]:
+
+        kwargs["_ignore_lazy"] = False
+
+        if kwargs.get("flattened", False):
             # could be id references, dereference them to continue deserialization
             value = self._dereference_flattened(value, attr, **kwargs)
 

@@ -279,3 +279,80 @@ def test_multiple_nested_reverse_flattened_deserialization():
 
     assert book2._id == "http://example.com/books/2"
     assert book2.name == "We Are Legion (We Are Bob)"
+
+
+def test_lazy_deserialization():
+    """Tests that lazy deserialization works."""
+    import lazy_object_proxy
+
+    class Genre:
+        def __init__(self, name):
+            self.name = name
+
+        def test(self):
+            return self.name
+
+        def __call__(self):
+            return self.name
+
+    class Book:
+        def __init__(self, name, genre):
+            self.name = name
+            self.genre = genre
+
+    class Author:
+        def __init__(self, name, books):
+            self.name = name
+            self.books = books
+
+    schema = fields.Namespace("https://schema.org/")
+
+    class GenreSchema(JsonLDSchema):
+        _id = fields.BlankNodeId()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.Genre
+            model = Genre
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.BlankNodeId()
+        name = fields.String(schema.name)
+        genre = fields.Nested(schema.genre, GenreSchema)
+
+        class Meta:
+            rdf_type = schema.Book
+            model = Book
+
+    class AuthorSchema(JsonLDSchema):
+        _id = fields.BlankNodeId()
+        name = fields.String(schema.name)
+        books = fields.Nested(schema.books, BookSchema, many=True)
+
+        class Meta:
+            rdf_type = schema.Author
+            model = Author
+
+    data = {
+        "@type": ["https://schema.org/Author"],
+        "https://schema.org/books": [
+            {
+                "@type": ["https://schema.org/Book"],
+                "https://schema.org/genre": {"@type": ["https://schema.org/Genre"], "https://schema.org/name": "Novel"},
+                "https://schema.org/name": "Don Quixote",
+            }
+        ],
+        "https://schema.org/name": "Miguel de Cervantes",
+    }
+
+    a = AuthorSchema(lazy=True).load(data)
+
+    assert a.name == "Miguel de Cervantes"
+    book = a.books[0]
+
+    assert isinstance(book, lazy_object_proxy.Proxy)
+    assert " wrapping " not in repr(book)  # make sure proxy is not evaluated yet
+
+    assert book.name == "Don Quixote"
+    assert " wrapping " in repr(book)  # make sure proxy is not evaluated yet
+    assert book.genre.name == "Novel"
