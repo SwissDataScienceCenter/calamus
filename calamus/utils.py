@@ -21,6 +21,7 @@ import types
 import typing
 from lazy_object_proxy.slots import Proxy as LazyProxy, _ProxyMetaType
 from lazy_object_proxy.compat import with_metaclass
+import rdflib
 
 
 def normalize_id(
@@ -60,6 +61,41 @@ def normalize_value(value):
         return value["@value"]
 
     return value
+
+
+def validate_field_properties(data, graph, query=None, mem={"valid": set(), "invalid": set()}):
+    """Validates if the field properties for data are present in the OWL ontology graph or not."""
+    """Returns dict with key valid having all valid properties (excluding @id and @type), invalid having all invalid properties"""
+    """A prepared query can be optionally passed so we don't need to keep parsing the query again and again for lists"""
+    """mem is for memoization for lists, to avoid querying the ontology again for properties we already know are valid or invalid"""
+
+    res = {"valid": set(), "invalid": set()}
+
+    if query is None:
+        query = prepareQuery(
+            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+        )
+
+    if isinstance(data, dict) and isinstance(graph, rdflib.Graph):
+        for prop in data.keys():
+            if prop in mem["valid"]:
+                res["valid"].add(prop)
+                continue
+            if prop in mem["invalid"]:
+                res["invalid"].add(prop)
+                continue
+
+            # after checking memoization
+            if prop != "@id" and prop != "@type":
+                p = rdflib.URIRef(prop)
+                qres = graph.query(query, initBindings={"property": p})
+                # any result implies the property is valid in the ontology
+                for q in qres:
+                    if q:
+                        res["valid"].add(prop)
+                    else:
+                        res["invalid"].add(prop)
+    return res
 
 
 class Proxy(LazyProxy, with_metaclass(_ProxyMetaType)):
