@@ -22,14 +22,15 @@ from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE,
 from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
-
+from rdflib.plugins.sparql import prepareQuery
+import rdflib
 from pyld import jsonld
 
 import inspect
 
 import typing
 
-from calamus.utils import normalize_id, normalize_type
+from calamus.utils import normalize_id, normalize_type, validate_field_properties
 
 _T = typing.TypeVar("_T")
 
@@ -281,6 +282,57 @@ class JsonLDSchema(Schema):
                         )
 
         return ret
+
+    def validate_properties(self, data, graph, return_valid_data=False):
+        """Data can be a dictionary of JSONLD data, an object of model class, or a list of either of them"""
+        """Calls the validate_field_properties function depending on values of many and return flag"""
+        """If return_valid_vata is True, a valid form of the input data is returned, with all non valid properties deleted"""
+        """Else, a dict with valid key having all valid properties and invalid key having all invalid keys is returned"""
+        """The graph string should point to an OWL ontology"""
+
+        if isinstance(data, self.Meta.model) or all(isinstance(s, self.Meta.model) for s in data):
+            data = self.dump(data)
+
+        g = rdflib.Graph()
+        g.parse(graph)
+
+        # q = prepareQuery("SELECT ?o WHERE { ?property ?x ?o . FILTER(regex(lcase(str(?o)),'#.*property.*')) }")
+        q = prepareQuery(
+            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+        )
+        # query checks property we are passing is a property in the ontology loaded or not
+
+        if self.many:
+            i = 0
+            res = {"valid": set(), "invalid": set()}
+            # res helps with memoization and is also the return value if return_valid_data is False
+
+            valdata = []
+            for field in data:
+                fres = validate_field_properties(field, g, query=q, mem=res)
+                res["valid"] = res["valid"].union(fres["valid"])
+                res["invalid"] = res["invalid"].union(fres["invalid"])
+
+                if return_valid_data:
+                    resf = field.copy()
+                    valdata.append(resf)
+                    for inval in fres["invalid"]:
+                        valdata[i].pop(inval, None)
+                    i += 1
+
+            if return_valid_data:
+                return valdata
+            else:
+                return res
+        else:
+            res = validate_field_properties(data, g, query=q)
+            if return_valid_data:
+                resd = data.copy()
+                for inv in res["invalid"]:
+                    resd.pop(inv, None)
+                return resd
+            else:
+                return res
 
     @post_load
     def make_instance(self, data, **kwargs):
