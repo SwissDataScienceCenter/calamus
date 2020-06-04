@@ -29,6 +29,9 @@
 .. image:: https://github.com/SwissDataScienceCenter/calamus/workflows/Test,%20Integration%20Tests%20and%20Deploy/badge.svg
    :target: https://github.com/SwissDataScienceCenter/calamus/actions?query=workflow%3A%22Test%2C+Integration+Tests+and+Deploy%22+branch%3Amaster
 
+.. image:: https://badges.gitter.im/SwissDataScienceCenter/calamus.svg
+   :target: https://gitter.im/SwissDataScienceCenter/calamus?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge
+
 calamus is a library built on top of marshmallow to allow (de-)Serialization
 of Python classes to JSON-LD
 
@@ -111,3 +114,9 @@ You can also easily deserialize JSON-LD to python objects
     }
     book = BookSchema().load(data)
     #<Book(_id="http://example.com/books/1", name="Ilias")>
+
+
+Support
+=======
+
+You can reach us on our `Gitter Channel <https://gitter.im/SwissDataScienceCenter/calamus>`_.
