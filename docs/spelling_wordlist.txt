@@ -70,6 +70,7 @@ izing
 Janusgraph
 Jena
 json
+JSON
 jupyter
 JupyterHub
 Jupyterhub
