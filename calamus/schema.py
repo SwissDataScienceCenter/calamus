@@ -15,7 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Marshmallow schema implementation that supports Json-LD."""
+"""Marshmallow schema implementation that supports JSON-LD."""
 
 from marshmallow.schema import Schema, SchemaOpts
 from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE, INCLUDE

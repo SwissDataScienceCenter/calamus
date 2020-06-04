@@ -19,7 +19,7 @@
    :align: center
 
 ==================================================
- calamus: Json-LD Serialization Library for Python
+ calamus: JSON-LD Serialization Library for Python
 ==================================================
 
 .. image:: https://readthedocs.org/projects/calamus/badge/?version=latest
@@ -30,7 +30,7 @@
    :target: https://github.com/SwissDataScienceCenter/calamus/actions?query=workflow%3A%22Test%2C+Integration+Tests+and+Deploy%22+branch%3Amaster
 
 calamus is a library built on top of marshmallow to allow (de-)Serialization
-of Python classes to Json-LD
+of Python classes to JSON-LD
 
 
 Installation
@@ -82,7 +82,7 @@ Make sure to set ``rdf_type`` to the RDF triple type you want get and
 Serializing objects ("Dumping")
 -------------------------------
 
-You can now easily serialize python classes to Json-LD
+You can now easily serialize python classes to JSON-LD
 
 ::
 
@@ -100,7 +100,7 @@ You can now easily serialize python classes to Json-LD
 Deserializing objects ("Loading")
 ---------------------------------
 
-You can also easily deserialize Json-LD to python objects
+You can also easily deserialize JSON-LD to python objects
 
 ::
 

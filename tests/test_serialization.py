@@ -15,7 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for serialization to python dicts Json-LD."""
+"""Tests for serialization to python dicts JSON-LD."""
 
 import calamus.fields as fields
 from calamus.schema import JsonLDSchema
