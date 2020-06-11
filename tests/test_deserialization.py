@@ -279,3 +279,33 @@ def test_multiple_nested_reverse_flattened_deserialization():
 
     assert book2._id == "http://example.com/books/2"
     assert book2.name == "We Are Legion (We Are Bob)"
+
+
+def test_iri_field_deserialization():
+    """Tests deserialization of IRI fields."""
+
+    class A(object):
+        def __init__(self, _id, url):
+            super().__init__()
+            self._id = _id
+            self.url = url
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        url = fields.IRI(schema.url)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    data = {
+        "@id": "http://example.com/1",
+        "@type": ["http://schema.org/A"],
+        "http://schema.org/url": {"@id": "http://datascience.ch"},
+    }
+
+    a = ASchema().load(data)
+
+    assert a.url == "http://datascience.ch"

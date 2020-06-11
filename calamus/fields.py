@@ -33,7 +33,7 @@ from calamus.utils import normalize_type, normalize_value
 logger = logging.getLogger("calamus")
 
 
-class IRI(object):
+class IRIReference(object):
     """ Represent an IRI in a namespace."""
 
     def __init__(self, namespace, name):
@@ -46,13 +46,13 @@ class IRI(object):
 
     def __repr__(self):
         """Representation of IRI."""
-        return 'IRI(namespace="{namespace}", name="{name}")'.format(namespace=self.namespace, name=self.name)
+        return 'IRIReference(namespace="{namespace}", name="{name}")'.format(namespace=self.namespace, name=self.name)
 
     def __eq__(self, other):
-        """Check equality between this and an other IRI."""
+        """Check equality between this and an other IRIReference."""
         expanded = str(self)
 
-        if isinstance(other, IRI):
+        if isinstance(other, IRIReference):
             other = str(other)
 
         return expanded == other
@@ -77,7 +77,7 @@ class Namespace(object):
         self.namespace = namespace
 
     def __getattr__(self, name):
-        return IRI(self, name)
+        return IRIReference(self, name)
 
     def __str__(self):
         return self.namespace
@@ -133,6 +133,22 @@ class String(_JsonLDField, fields.String):
         if self.parent.opts.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#string"}
         return value
+
+
+class IRI(String):
+    """An external IRI reference."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        return {"@id": value}
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if "@id" in value:
+            value = value["@id"]
+        return super()._deserialize(value, attr, data, **kwargs)
 
 
 class Integer(_JsonLDField, fields.Integer):
