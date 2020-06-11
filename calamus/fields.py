@@ -26,7 +26,6 @@ from marshmallow import class_registry, utils
 from marshmallow.exceptions import ValidationError
 import logging
 import copy
-from uuid import uuid4
 
 import typing
 import types
