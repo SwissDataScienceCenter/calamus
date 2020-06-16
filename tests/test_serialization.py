@@ -265,3 +265,31 @@ def test_multiple_nested_flattened_serialization():
     assert book2["@type"] == ["http://schema.org/Book"]
     assert "http://schema.org/author" in book2
     assert book2["http://schema.org/author"][0]["@id"] == a._id
+
+
+def test_iri_field_serialization():
+    """Tests serialization of IRI fields."""
+
+    class A(object):
+        def __init__(self, _id, url):
+            super().__init__()
+            self._id = _id
+            self.url = url
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        url = fields.IRI(schema.url)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    a = A("http://example.com/1", "http://datascience.ch")
+
+    jsonld = ASchema().dump(a)
+
+    assert "http://schema.org/url" in jsonld
+    assert "@id" in jsonld["http://schema.org/url"]
+    assert jsonld["http://schema.org/url"]["@id"] == "http://datascience.ch"
