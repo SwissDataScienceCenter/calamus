@@ -35,6 +35,11 @@ from calamus.utils import normalize_id, normalize_type, Proxy
 _T = typing.TypeVar("_T")
 
 
+def blank_node_id_strategy(ret, obj):
+    """id_generation_strategy that creates random blank node ids."""
+    return "_:{id}".format(id=uuid4().hex)
+
+
 class JsonLDSchemaOpts(SchemaOpts):
     """Options class for `JsonLDSchema`.
 
@@ -58,7 +63,7 @@ class JsonLDSchemaOpts(SchemaOpts):
         self.model = getattr(meta, "model", None)
         self.add_value_types = getattr(meta, "add_value_types", False)
 
-        self.id_generation_strategy = getattr(meta, "id_generation_strategy", None)
+        self.id_generation_strategy = getattr(meta, "id_generation_strategy", blank_node_id_strategy)
 
 class JsonLDSchemaMeta(SchemaMeta):
     """Meta-class for a for a JsonLDSchema class."""
@@ -185,7 +190,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             else:
                 ret[key] = value
 
-        if ("@id" not in ret or not ret["@id"]) and self.opts.id_generation_strategy:
+        if "@id" not in ret or not ret["@id"]:
             ret["@id"] = self.opts.id_generation_strategy(ret, obj)
 
         # add type
@@ -423,8 +428,3 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             )
 
         return instance
-
-
-def blank_node_id_strategy(ret, obj):
-    """id_generation_strategy that creates random blank node ids."""
-    return "_:{id}".format(id=uuid4().hex)
