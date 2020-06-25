@@ -354,5 +354,5 @@ def test_lazy_deserialization():
     assert " wrapping " not in repr(book)  # make sure proxy is not evaluated yet
 
     assert book.name == "Don Quixote"
-    assert " wrapping " in repr(book)  # make sure proxy is not evaluated yet
+    assert " wrapping " in repr(book)  # make sure proxy is evaluated
     assert book.genre.name == "Novel"

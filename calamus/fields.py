@@ -242,7 +242,7 @@ class Nested(_JsonLDField, fields.Nested):
                         context=context,
                         load_only=self._nested_normalized_option("load_only"),
                         dump_only=self._nested_normalized_option("dump_only"),
-                        lazy=self.parent.lazy,
+                        lazy=self.root.lazy,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
@@ -341,8 +341,6 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _deserialize(self, value, attr, data, **kwargs):
         """Deserialize nested object."""
-
-        kwargs["_ignore_lazy"] = False
 
         if kwargs.get("flattened", False):
             # could be id references, dereference them to continue deserialization
