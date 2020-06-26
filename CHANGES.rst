@@ -18,7 +18,29 @@
 Changes
 =======
 
+`0.2.0 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.1.2...v0.2.0>`__ (2020-05-08)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added IRIField
+  (`#24 <https://github.com/SwissDataScienceCenter/calamus/pull/24>`__)
+
+- Added BooleanField
+  (`1a93bdd <https://github.com/SwissDataScienceCenter/calamus/commit/1a93bdd1cdb6478b7c3a6a17e9ad803df1e0ca39>`__)
+
+- Added ``init_name`` setting to fields for cases where the name of the property differs from the name in the
+  ``__init__`` method
+
+Fixes
+~~~~~
+- Fixed an issue where ``fields.Nested`` would not work when used inside ``fields.List``
+
+
+
 `0.1.2 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.1.1...v0.1.2>`__ (2020-05-08)
+--------------------------------------------------------------------------------------------------
 
 Features
 ~~~~~~~~
@@ -34,6 +56,7 @@ Features
 
 
 `0.1.1 <https://github.com/SwissDataScienceCenter/calamus/tree/v0.1.1>`__ (2020-05-01)
+--------------------------------------------------------------------------------------------------
 
 Features
 ~~~~~~~~
