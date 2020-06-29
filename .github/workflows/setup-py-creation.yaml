@@ -15,6 +15,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.head_ref }}
+    - run: git checkout -b auto-generate-setup-py
     - name: Setup python
       uses: actions/setup-python@v1
       with:
@@ -34,4 +35,4 @@ jobs:
         git config --local user.name "RenkuBot"
         git add setup.py
         git commit -m 'chore: automatically generate setup.py' || true
-        git push origin ${{ github.head_ref }}
+        git push --force origin auto-generate-setup-py
