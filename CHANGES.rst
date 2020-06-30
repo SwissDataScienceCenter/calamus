@@ -18,6 +18,16 @@
 Changes
 =======
 
+`0.3.0 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.2.0...v0.3.0>`__ (2020-06-30)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added lazy loading support
+  (`#12 <https://github.com/SwissDataScienceCenter/calamus/issues/12>`__)
+
+
 `0.2.0 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.1.2...v0.2.0>`__ (2020-05-08)
 --------------------------------------------------------------------------------------------------
 
