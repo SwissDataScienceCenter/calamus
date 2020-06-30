@@ -77,6 +77,10 @@ class JsonLDSchemaMeta(SchemaMeta):
 class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
     """Schema for a JsonLD class.
 
+    Args:
+        flattened (bool): If the Json-LD should be loaded/dumped in flattened form
+        lazy (bool): Enables lazy loading of nested attributes
+
     Example:
 
     .. code-block:: python
@@ -108,6 +112,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         partial=False,
         unknown=None,
         flattened=False,
+        lazy=False,
         _all_objects=None,
     ):
         super().__init__(
@@ -123,6 +128,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         )
 
         self.flattened = flattened
+        self.lazy = lazy
         self._all_objects = _all_objects
         self._init_names_mapping = {}
 
@@ -276,6 +282,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
                 d_kwargs["_all_objects"] = self._all_objects
                 d_kwargs["flattened"] = self.flattened
+                d_kwargs["lazy"] = self.lazy
                 getter = lambda val: field_obj.deserialize(val, field_name, data, **d_kwargs)
                 value = self._call_and_store(
                     getter_func=getter, data=raw_value, field_name=field_name, error_store=error_store, index=index,
