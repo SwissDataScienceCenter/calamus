@@ -281,6 +281,139 @@ def test_multiple_nested_reverse_flattened_deserialization():
     assert book2.name == "We Are Legion (We Are Bob)"
 
 
+def test_iri_field_deserialization():
+    """Tests deserialization of IRI fields."""
+
+    class A(object):
+        def __init__(self, _id, url):
+            super().__init__()
+            self._id = _id
+            self.url = url
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        url = fields.IRI(schema.url)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    data = {
+        "@id": "http://example.com/1",
+        "@type": ["http://schema.org/A"],
+        "http://schema.org/url": {"@id": "http://datascience.ch"},
+    }
+
+    a = ASchema().load(data)
+
+    assert a.url == "http://datascience.ch"
+
+
+@pytest.mark.parametrize("value", [["1"], ["1", "2"]])
+def test_list_field_deserialization(value):
+    """Test deserialization of List fields."""
+
+    class Entity:
+        def __init__(self, field):
+            self.field = field
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class EntitySchema(JsonLDSchema):
+        field = fields.List(schema.field, fields.String)
+
+        class Meta:
+            rdf_type = schema.Entity
+            model = Entity
+
+    data = {"@type": ["http://schema.org/Entity"], "http://schema.org/field": value}
+
+    entity = EntitySchema().load(data)
+
+    assert entity.field == value
+
+
+def test_init_name():
+    """Test deserialization of fields with init_name."""
+
+    class Entity:
+        def __init__(self, another_field):
+            self.field = another_field
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class EntitySchema(JsonLDSchema):
+        field = fields.Boolean(schema.field, init_name="another_field")
+
+        class Meta:
+            rdf_type = schema.Entity
+            model = Entity
+
+    data = {"@type": ["http://schema.org/Entity"], "http://schema.org/field": "true"}
+
+    entity = EntitySchema().load(data)
+
+    assert entity.field is True
+
+
+def test_init_name_failure():
+    """Test deserialization of fields with init_name fails in case of duplication."""
+
+    class Entity:
+        def __init__(self, field, another_field):
+            self.field = field
+            self.another_field = another_field
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class EntitySchema(JsonLDSchema):
+        field = fields.Boolean(schema.field, init_name="another_field")
+        another_field = fields.Boolean(schema.another_field, missing=False)
+
+        class Meta:
+            rdf_type = schema.Entity
+            model = Entity
+
+    data = {"@type": ["http://schema.org/Entity"], "http://schema.org/field": "true"}
+
+    with pytest.raises(ValueError) as e:
+        EntitySchema().load(data)
+        assert "Initialization name another_field for field is already in data" in str(e)
+
+
+@pytest.mark.parametrize(
+    "formats, value, deserialized_value",
+    [
+        ([], "2020-06-15T08:34:03.607590+00:00", "2020-06-15 08:34:03.607590+00:00"),
+        (["%Y-%m-%d"], "2020-06-15", "2020-06-15 00:00:00"),
+        (["iso", "%Y-%m-%d", "%Y-%m"], "2020-06", "2020-06-01 00:00:00"),
+    ],
+)
+def test_alternative_date_format_deserialization(formats, value, deserialized_value):
+    """Test deserialization of DateTime fields with extra formats."""
+
+    class Entity:
+        def __init__(self, field):
+            self.field = field
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class EntitySchema(JsonLDSchema):
+        field = fields.DateTime(schema.field, extra_formats=formats)
+
+        class Meta:
+            rdf_type = schema.Entity
+            model = Entity
+
+    data = {"@type": ["http://schema.org/Entity"], "http://schema.org/field": value}
+
+    entity = EntitySchema().load(data)
+
+    assert str(entity.field) == deserialized_value
+
+
 def test_lazy_deserialization():
     """Tests that lazy deserialization works."""
     import lazy_object_proxy
