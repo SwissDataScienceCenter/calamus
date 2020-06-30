@@ -9,12 +9,10 @@ on:
     - 'pyproject.toml'
 
 jobs:
-  create-setup-py:
+  update-setup-py:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.head_ref }}
     - name: Setup python
       uses: actions/setup-python@v1
       with:
@@ -28,10 +26,14 @@ jobs:
       run: |
         pip install black
         black setup.py
-    - name: Commit changed setup.py
-      run: |
-        git config --local user.email "renku@datascience.ch"
-        git config --local user.name "RenkuBot"
-        git add setup.py
-        git commit -m 'chore: automatically generate setup.py' || true
-        git push origin ${{ github.head_ref }}
+    - name: Commit and create/update pull request
+      uses: peter-evans/create-pull-request@v2
+      with:
+        token: ${{ secrets.RENKU_CI_TOKEN }}
+        author: RenkuBot <renku@datascience.ch>
+        committer: RenkuBot <renku@datascience.ch>
+        commit-message: "Update setup.py"
+        title: "Action: Update setup.py"
+        body: "Auto-generated PR to update setup.py"
+        labels: automerge
+        branch: auto-update-setup-py
