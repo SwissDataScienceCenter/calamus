@@ -22,6 +22,7 @@ from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE,
 from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
+import lazy_object_proxy
 
 from pyld import jsonld
 
@@ -153,6 +154,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         """Serialize ``obj`` to jsonld."""
         if many and obj is not None:
             return [self._serialize(d, many=False) for d in typing.cast(typing.Iterable[_T], obj)]
+
+        if isinstance(obj, lazy_object_proxy.Proxy):
+            # resolve Proxy object
+            obj = obj.__wrapped__
+
         ret = self.dict_class()
         for attr_name, field_obj in self.dump_fields.items():
             value = field_obj.serialize(attr_name, obj, accessor=self.get_attribute)

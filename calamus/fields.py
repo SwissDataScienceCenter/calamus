@@ -341,6 +341,10 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _serialize_single_obj(self, obj, **kwargs):
         """Deserializes a single (possibly flattened) object."""
+        if isinstance(obj, lazy_object_proxy.Proxy):
+            # resolve Proxy object
+            obj = obj.__wrapped__
+
         if type(obj) not in self.schema["to"]:
             ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
 
@@ -352,6 +356,9 @@ class Nested(_JsonLDField, fields.Nested):
         """Deserialize a nested field with one or many values."""
         if nested_obj is None:
             return None
+        if isinstance(nested_obj, lazy_object_proxy.Proxy):
+            # resolve Proxy object
+            nested_obj = nested_obj.__wrapped__
         many = self.many or many
         if many:
             result = []
