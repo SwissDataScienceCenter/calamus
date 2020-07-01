@@ -31,7 +31,7 @@ from uuid import uuid4
 import typing
 import types
 
-from calamus.utils import normalize_type, normalize_value
+from calamus.utils import normalize_type, normalize_value, Proxy
 
 logger = logging.getLogger("calamus")
 
@@ -341,7 +341,16 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _serialize_single_obj(self, obj, **kwargs):
         """Deserializes a single (possibly flattened) object."""
-        if isinstance(obj, lazy_object_proxy.Proxy):
+        if isinstance(obj, Proxy):
+            proxy_schema = obj.__proxy_schema__
+            matching_schema = next((s for s in self.schema["to"].values() if isinstance(proxy_schema, type(s))), None)
+            if (
+                not obj.__proxy_initialized__
+                and matching_schema
+                and proxy_schema.flattened == matching_schema.flattened
+            ):
+                # if proxy was not accessed and we use the same schema, return original data
+                return obj.__proxy_original_data__
             # resolve Proxy object
             obj = obj.__wrapped__
 
@@ -356,9 +365,22 @@ class Nested(_JsonLDField, fields.Nested):
         """Deserialize a nested field with one or many values."""
         if nested_obj is None:
             return None
-        if isinstance(nested_obj, lazy_object_proxy.Proxy):
+
+        if isinstance(nested_obj, Proxy):
+            proxy_schema = nested_obj.__proxy_schema__
+            matching_schema = next((s for s in self.schema["to"].values() if isinstance(proxy_schema, type(s))), None)
+
+            if (
+                not nested_obj.__proxy_initialized__
+                and matching_schema
+                and proxy_schema.flattened == matching_schema.flattened
+            ):
+                # if proxy was not accessed and we use the same schema, return original data
+                return nested_obj.__proxy_original_data__
+
             # resolve Proxy object
             nested_obj = nested_obj.__wrapped__
+
         many = self.many or many
         if many:
             result = []
@@ -384,7 +406,7 @@ class Nested(_JsonLDField, fields.Nested):
             ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
 
         if schema.lazy:
-            return lazy_object_proxy.Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial))
+            return Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial), schema, value)
         if not schema._all_objects and self.root._all_objects:
             schema._all_objects = self.root._all_objects
         schema._reversed_properties = self.root._reversed_properties

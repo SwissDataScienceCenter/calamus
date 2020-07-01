@@ -400,7 +400,7 @@ def test_iri_field_serialization():
 
 def test_lazy_proxy_serialization():
     """Tests that lazy deserialization works."""
-    import lazy_object_proxy
+    from calamus.utils import Proxy
 
     class Genre:
         def __init__(self, name):
@@ -467,8 +467,20 @@ def test_lazy_proxy_serialization():
     assert a.name == "Miguel de Cervantes"
     book = a.books[0]
 
-    assert isinstance(book, lazy_object_proxy.Proxy)
+    assert isinstance(book, Proxy)
 
     author = AuthorSchema().dump(a)
 
+    assert not book.__proxy_initialized__
+
     assert author.keys() == data.keys()
+
+    original_book = BookSchema(flattened=False).dump(book)
+    assert isinstance(original_book, dict)
+    assert not book.__proxy_initialized__
+
+    flat_book = BookSchema(flattened=True).dump(book)
+
+    assert isinstance(flat_book, list)
+    assert len(flat_book) == 2
+    assert book.__proxy_initialized__

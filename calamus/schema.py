@@ -22,7 +22,6 @@ from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE,
 from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
-import lazy_object_proxy
 
 from pyld import jsonld
 
@@ -30,7 +29,7 @@ import inspect
 
 import typing
 
-from calamus.utils import normalize_id, normalize_type
+from calamus.utils import normalize_id, normalize_type, Proxy
 
 _T = typing.TypeVar("_T")
 
@@ -155,7 +154,16 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         if many and obj is not None:
             return [self._serialize(d, many=False) for d in typing.cast(typing.Iterable[_T], obj)]
 
-        if isinstance(obj, lazy_object_proxy.Proxy):
+        if isinstance(obj, Proxy):
+            proxy_schema = obj.__proxy_schema__
+            if (
+                not obj.__proxy_initialized__
+                and isinstance(proxy_schema, type(self))
+                and proxy_schema.flattened == self.flattened
+            ):
+                # if proxy was not accessed and we use the same schema, return original data
+                return obj.__proxy_original_data__
+
             # resolve Proxy object
             obj = obj.__wrapped__
 
