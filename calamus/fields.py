@@ -421,7 +421,7 @@ class List(_JsonLDField, fields.List):
     def _deserialize(self, value, attr, data, **kwargs) -> typing.List[typing.Any]:
         if isinstance(value, dict):  # an ordered list
             value = value["@list"]
-        return super(fields.List, self)._deserialize(value, attr, data, **kwargs)
+        return super(_JsonLDField, self)._deserialize(value, attr, data, **kwargs)
 
     @property
     def opts(self):
