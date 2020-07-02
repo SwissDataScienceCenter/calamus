@@ -228,6 +228,12 @@ class DateTime(_JsonLDField, fields.DateTime):
         raise self.make_error("invalid", input=value, obj_type=self.OBJ_TYPE)
 
 
+class Dict(_JsonLDField, fields.Dict):
+    """A dict field."""
+
+    pass
+
+
 class Nested(_JsonLDField, fields.Nested):
     """A reference to one or more nested classes."""
 
