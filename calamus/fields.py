@@ -103,6 +103,7 @@ class _JsonLDField(fields.Field):
 
         self.reverse = kwargs.get("reverse", False)
         self.init_name = kwargs.get("init_name", None)
+        self.add_value_types = kwargs.get("add_value_types", False)
 
     @property
     def data_key(self):
@@ -135,7 +136,7 @@ class String(_JsonLDField, fields.String):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#string"}
         return value
 
@@ -164,7 +165,7 @@ class Integer(_JsonLDField, fields.Integer):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#integer"}
         return value
 
@@ -177,7 +178,7 @@ class Float(_JsonLDField, fields.Float):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#float"}
         return value
 
@@ -190,7 +191,7 @@ class Boolean(_JsonLDField, fields.Boolean):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#boolean"}
         return value
 
@@ -204,7 +205,7 @@ class DateTime(_JsonLDField, fields.DateTime):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
         return value
 
