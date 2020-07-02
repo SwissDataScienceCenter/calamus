@@ -243,8 +243,6 @@ class Nested(_JsonLDField, fields.Nested):
         if not isinstance(self.nested, list):
             self.nested = [self.nested]
 
-        self.nested = sorted(self.nested)
-
     @property
     def schema(self):
         """The nested Schema object.
