@@ -235,6 +235,12 @@ class Dict(_JsonLDField, fields.Dict):
     pass
 
 
+class Raw(_JsonLDField, fields.Raw):
+    """A raw field."""
+
+    pass
+
+
 class Nested(_JsonLDField, fields.Nested):
     """A reference to one or more nested classes."""
 
