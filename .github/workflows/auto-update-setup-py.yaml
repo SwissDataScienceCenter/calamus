@@ -1,9 +1,7 @@
-name: create setup.py
+name: Update setup.py
 
 on:
-  push:
-    branches:
-    - master
+  pull_request:
     paths:
     - 'poetry.lock'
     - 'pyproject.toml'
@@ -13,11 +11,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+        token: ${{ secrets.RENKU_CI_TOKEN }}
     - name: Setup python
       uses: actions/setup-python@v1
       with:
         python-version: 3.7
-    - name: Generate setup.py
+    - name: Update/generate setup.py
       run: |
         python -m pip install --upgrade pip
         pip install dephell[full]
@@ -26,14 +27,10 @@ jobs:
       run: |
         pip install black
         black setup.py
-    - name: Commit and create/update pull request
-      uses: peter-evans/create-pull-request@v2
-      with:
-        token: ${{ secrets.RENKU_CI_TOKEN }}
-        author: RenkuBot <renku@datascience.ch>
-        committer: RenkuBot <renku@datascience.ch>
-        commit-message: "Update setup.py"
-        title: "Action: Update setup.py"
-        body: "Auto-generated PR to update setup.py"
-        labels: automerge
-        branch: auto-update-setup-py
+    - name: Commit updated setup.py
+      run: |
+        git config --local user.email "renku@datascience.ch"
+        git config --local user.name "RenkuBot"
+        git add setup.py
+        git commit -m 'chore: automatically update setup.py' || true
+        git push origin ${{ github.head_ref }}
