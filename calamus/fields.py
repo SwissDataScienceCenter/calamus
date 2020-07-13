@@ -307,6 +307,8 @@ class Nested(_JsonLDField, fields.Nested):
                         load_only=self._nested_normalized_option("load_only"),
                         dump_only=self._nested_normalized_option("dump_only"),
                         lazy=self.root.lazy,
+                        flattened=self.root.flattened,
+                        _all_objects=self.root._all_objects,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
