@@ -120,6 +120,10 @@ class _JsonLDField(fields.Field):
         value = normalize_value(value)
         return super()._deserialize(value, attr, data, **kwargs)
 
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        return {}
+
 
 class Id(_JsonLDField, fields.String):
     """A node identifier."""
@@ -280,6 +284,7 @@ class Nested(_JsonLDField, fields.Nested):
                         original = _schema.exclude
                         _schema.exclude = set_class(self.exclude).union(original)
                     _schema._init_fields()
+                    _schema._visited = self.root._visited
                     self._schema["from"][rdf_type] = _schema
                     self._schema["to"][model] = _schema
                 else:
@@ -299,6 +304,7 @@ class Nested(_JsonLDField, fields.Nested):
                     model = schema_class.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
+
                     self._schema["from"][rdf_type] = schema_class(
                         many=False,
                         only=self.only,
@@ -308,7 +314,8 @@ class Nested(_JsonLDField, fields.Nested):
                         dump_only=self._nested_normalized_option("dump_only"),
                         lazy=self.root.lazy,
                         flattened=self.root.flattened,
-                        _all_objects=self.root._all_objects,
+                        _visited=self.root._visited,
+                        _top_level=False,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
@@ -319,6 +326,7 @@ class Nested(_JsonLDField, fields.Nested):
             ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
 
         schema = self.schema["to"][type(obj)]
+        schema._top_level = False
         return schema.dump(obj)
 
     def _serialize(self, nested_obj, attr, obj, many=False, **kwargs):
@@ -351,6 +359,9 @@ class Nested(_JsonLDField, fields.Nested):
 
         if schema.lazy:
             return lazy_object_proxy.Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial))
+        if not schema._all_objects and self.root._all_objects:
+            schema._all_objects = self.root._all_objects
+        schema._reversed_properties = self.root._reversed_properties
         return schema.load(value, unknown=self.unknown, partial=partial)
 
     def _load(self, value, data, partial=None, many=False):
@@ -381,7 +392,7 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _dereference_single_id(self, value, attr, **kwargs):
         """Dereference a single id."""
-        data = kwargs["_all_objects"].get(value, None)
+        data = dict(kwargs["_all_objects"].get(value, None))
         if not data:
             raise ValueError("Couldn't dereference id {id}".format(id=value))
 
@@ -414,6 +425,21 @@ class Nested(_JsonLDField, fields.Nested):
 
         return super()._deserialize(value, attr, data, **kwargs)
 
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        fields = {}
+
+        if self.reverse:
+            fields = {self.data_key: {type(s) for s in self.schema["from"].values()}}
+
+        for schema in self.schema["from"].values():
+            for k, v in schema._reversed_properties.items():
+                if k not in fields:
+                    fields[k] = set()
+                fields[k].update(v)
+
+        return fields
+
 
 class List(_JsonLDField, fields.List):
     """An ordered list using the ``@list`` keyword."""
@@ -435,3 +461,7 @@ class List(_JsonLDField, fields.List):
     def opts(self):
         """Return parent's opts."""
         return self.parent.opts
+
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        return self.inner._reversed_fields()
