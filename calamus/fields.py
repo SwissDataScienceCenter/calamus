@@ -72,7 +72,6 @@ class IRIReference(object):
         return str(self).__hash__()
 
 
-
 class Namespace(object):
     """Represents a namespace/ontology.
 
@@ -135,8 +134,8 @@ class Id(_JsonLDField, fields.String):
         super().__init__(field_name="@id", *args, **kwargs)
 
 
-class BlankNodeId(fields.String):
-    """ A blank/anonymous node identifier."""
+class BlankNodeId(_JsonLDField, fields.String):
+    """A blank/anonymous node identifier."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

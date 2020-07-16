@@ -425,30 +425,30 @@ def test_lazy_proxy_serialization():
     schema = fields.Namespace("https://schema.org/")
 
     class GenreSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
 
         class Meta:
             rdf_type = schema.Genre
             model = Genre
+            id_generation_strategy = blank_node_id_strategy
 
     class BookSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
         genre = fields.Nested(schema.genre, GenreSchema)
 
         class Meta:
             rdf_type = schema.Book
             model = Book
+            id_generation_strategy = blank_node_id_strategy
 
     class AuthorSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
         books = fields.Nested(schema.books, BookSchema, many=True)
 
         class Meta:
             rdf_type = schema.Author
             model = Author
+            id_generation_strategy = blank_node_id_strategy
 
     data = {
         "@type": ["https://schema.org/Author"],
@@ -460,6 +460,7 @@ def test_lazy_proxy_serialization():
             }
         ],
         "https://schema.org/name": "Miguel de Cervantes",
+        "@id": "_:dummyid",
     }
 
     a = AuthorSchema(lazy=True).load(data)

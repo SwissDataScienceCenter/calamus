@@ -36,7 +36,7 @@ _T = typing.TypeVar("_T")
 
 
 def blank_node_id_strategy(ret, obj):
-    """id_generation_strategy that creates random blank node ids."""
+    """``id_generation_strategy`` that creates random blank node ids."""
     return "_:{id}".format(id=uuid4().hex)
 
 
@@ -64,6 +64,7 @@ class JsonLDSchemaOpts(SchemaOpts):
         self.add_value_types = getattr(meta, "add_value_types", False)
 
         self.id_generation_strategy = getattr(meta, "id_generation_strategy", blank_node_id_strategy)
+
 
 class JsonLDSchemaMeta(SchemaMeta):
     """Meta-class for a for a JsonLDSchema class."""
