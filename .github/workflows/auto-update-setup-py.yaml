@@ -1,0 +1,36 @@
+name: Update setup.py
+
+on:
+  pull_request:
+    paths:
+    - 'poetry.lock'
+    - 'pyproject.toml'
+
+jobs:
+  update-setup-py:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.head_ref }}
+        token: ${{ secrets.RENKU_CI_TOKEN }}
+    - name: Setup python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.7
+    - name: Update/generate setup.py
+      run: |
+        python -m pip install --upgrade pip
+        pip install dephell[full]
+        dephell deps convert --from pyproject.toml --to setup.py
+    - name: Fix setup.py format
+      run: |
+        pip install black
+        black setup.py
+    - name: Commit updated setup.py
+      run: |
+        git config --local user.email "renku@datascience.ch"
+        git config --local user.name "RenkuBot"
+        git add setup.py
+        git commit -m 'chore: automatically update setup.py' || true
+        git push origin ${{ github.head_ref }}
