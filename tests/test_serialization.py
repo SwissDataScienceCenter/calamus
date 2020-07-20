@@ -267,6 +267,109 @@ def test_multiple_nested_flattened_serialization():
     assert book2["http://schema.org/author"][0]["@id"] == a._id
 
 
+def test_multiple_nested_flattened_reverse_serialization():
+    """Test that we can output flattened jsonld for multiple nested objects."""
+
+    class A:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+    class B:
+        def __init__(self, _id, name, children):
+            self._id = _id
+            self.name = name
+            self.children = children
+
+    class C:
+        def __init__(self, _id, name, children):
+            self._id = _id
+            self.name = name
+            self.children = children
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    class BSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        children = fields.Nested(schema.parent, ASchema, reverse=True, many=True)
+
+        class Meta:
+            rdf_type = schema.B
+            model = B
+
+    class CSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        children = fields.Nested(schema.parent, BSchema, reverse=True, many=True)
+
+        class Meta:
+            rdf_type = schema.C
+            model = C
+
+    a1 = A("http://example.com/a/1", "a1")
+    a2 = A("http://example.com/a/2", "a2")
+    a3 = A("http://example.com/a/3", "a3")
+
+    b1 = B("http://example.com/b/1", "b1", [a1, a2])
+    b2 = B("http://example.com/b/2", "b2", [a3])
+
+    c = C("http://example.com/c/1", "c1", [b1, b2])
+
+    jsonld = CSchema(flattened=True).dump(c)
+
+    assert len(jsonld) == 6
+
+    as1 = next(e for e in jsonld if e["@id"] == "http://example.com/a/1")
+    as3 = next(e for e in jsonld if e["@id"] == "http://example.com/a/3")
+    bs1 = next(e for e in jsonld if e["@id"] == "http://example.com/b/1")
+    bs2 = next(e for e in jsonld if e["@id"] == "http://example.com/b/2")
+    cs = next(e for e in jsonld if e["@id"] == "http://example.com/c/1")
+
+    assert "http://schema.org/name" in cs
+    assert cs["http://schema.org/name"][0]["@value"] == c.name
+    assert "@id" in cs
+    assert cs["@id"] == c._id
+    assert "@type" in cs
+    assert cs["@type"] == ["http://schema.org/C"]
+
+    assert "http://schema.org/name" in bs1
+    assert bs1["http://schema.org/name"][0]["@value"] == b1.name
+    assert "@id" in bs1
+    assert bs1["@id"] == b1._id
+    assert "@type" in bs1
+    assert bs1["@type"] == ["http://schema.org/B"]
+
+    assert "http://schema.org/name" in bs2
+    assert bs2["http://schema.org/name"][0]["@value"] == b2.name
+    assert "@id" in bs2
+    assert bs2["@id"] == b2._id
+    assert "@type" in bs2
+    assert bs2["@type"] == ["http://schema.org/B"]
+
+    assert "http://schema.org/name" in as1
+    assert as1["http://schema.org/name"][0]["@value"] == a1.name
+    assert "@id" in as1
+    assert as1["@id"] == a1._id
+    assert "@type" in as1
+    assert as1["@type"] == ["http://schema.org/A"]
+
+    assert "http://schema.org/name" in as3
+    assert as3["http://schema.org/name"][0]["@value"] == a3.name
+    assert "@id" in as3
+    assert as3["@id"] == a3._id
+    assert "@type" in as3
+    assert as3["@type"] == ["http://schema.org/A"]
+
+
 def test_iri_field_serialization():
     """Tests serialization of IRI fields."""
 
