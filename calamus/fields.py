@@ -38,7 +38,11 @@ logger = logging.getLogger("calamus")
 
 @total_ordering
 class IRIReference(object):
-    """ Represent an IRI in a namespace."""
+    """ Represent an IRI in a namespace.
+
+    Args:
+        namespace (Namespace): The ``Namespace`` this IRI is part of.
+        name (str): the property name of this IRI."""
 
     def __init__(self, namespace, name):
         self.namespace = namespace
@@ -70,7 +74,11 @@ class IRIReference(object):
 
 
 class BlankNodeId(object):
-    """ A blank/anonymous node identifier."""
+    """ A blank/anonymous node identifier.
+
+    Args:
+        name (str): The name used to construct the blank node id. Default: ``None``.
+                    Will use a UUID if not supplied."""
 
     def __init__(self, name=None):
         self.name = name
@@ -82,7 +90,11 @@ class BlankNodeId(object):
 
 
 class Namespace(object):
-    """Represents a namespace/ontology."""
+    """Represents a namespace/ontology.
+
+    Args:
+        namespace (str): The base namespace URI for this namespace.
+    """
 
     def __init__(self, namespace):
         self.namespace = namespace
@@ -95,7 +107,14 @@ class Namespace(object):
 
 
 class _JsonLDField(fields.Field):
-    """Internal class that enables marshmallow fields to be serialized with a JsonLD field name."""
+    """Internal class that enables marshmallow fields to be serialized with a JsonLD field name.
+
+    Args:
+        field_name (IRIReference): The JSON-LD field name.
+        reverse (bool): Whether this is a reverse relation (via the ``@reverse`` keyword).
+        init_name (str): Name of this parameter in the ``__init__`` method, if it differs from the name on the class.
+        add_value_types (bool): Whether to add xsd value type information when serializing.
+    """
 
     def __init__(self, field_name=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -442,7 +461,15 @@ class Nested(_JsonLDField, fields.Nested):
 
 
 class List(_JsonLDField, fields.List):
-    """An ordered list using the ``@list`` keyword."""
+    """A potentially ordered list using the ``@list`` keyword.
+
+    Args:
+        ordered (bool): Whether this is an ordered (via ``@list`` keyword) list.
+
+    Warning: The JSON-LD flattening algorithm does not combine ``@list`` entries when merging nodes.
+    So if you use ``ordered=True`` and flatten the output, and you have the node containing the list
+    in multiple places in the graph, the node will get merged but its lists wont get merged (you get a list of lists
+    instead), which means that the output can't be deserialized back to python objects."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

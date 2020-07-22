@@ -78,7 +78,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
     """Schema for a JsonLD class.
 
     Args:
-        flattened (bool): If the Json-LD should be loaded/dumped in flattened form
+        flattened (bool): If the JSON-LD should be loaded/dumped in flattened form
         lazy (bool): Enables lazy loading of nested attributes
 
     Example:

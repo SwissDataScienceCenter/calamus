@@ -15,7 +15,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for Json-LD schema."""
+"""Tests for JSON-LD schema."""
 
 import calamus.fields as fields
 from calamus.schema import JsonLDSchema
