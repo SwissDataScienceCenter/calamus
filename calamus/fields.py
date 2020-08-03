@@ -411,9 +411,14 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _dereference_single_id(self, value, attr, **kwargs):
         """Dereference a single id."""
-        data = dict(kwargs["_all_objects"].get(value, None))
+        data = kwargs["_all_objects"].get(value, None)
         if not data:
             raise ValueError("Couldn't dereference id {id}".format(id=value))
+
+        try:
+            data = dict(data)
+        except (TypeError, ValueError):
+            raise ValueError(f"Couldn't convert value '{data}' to dictionary.")
 
         if self.reverse:
             # we need to remove the property from the child when handling reverse nesting
