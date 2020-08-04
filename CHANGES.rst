@@ -18,6 +18,27 @@
 Changes
 =======
 
+`0.3.1 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.0...v0.3.1>`__ (2020-08-03)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added a ``Dict`` field that simply passes along the contained dictionary (which should be valid Json-LD already).
+  Added a ``Raw`` field that just returns the contained value.
+  Added support for ``add_value_types`` at the field level.
+  (`PR #31 <https://github.com/SwissDataScienceCenter/calamus/pull/31>`__)
+
+Fixes
+~~~~~
+
+- Fixed an issue with sorting of schemes inside ``Nested`` fields. Original sort order is now preserved to
+  allow users to specify precedence (in case of ambiguous types).
+  Fixed the propagation of the ``flattened`` keyword to child schemes.
+  Fixed ``List`` field deserialization calling the wrong ``super()`` method.
+  (`PR #31 <https://github.com/SwissDataScienceCenter/calamus/pull/31>`__)
+
+
 `0.3.0 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.2.0...v0.3.0>`__ (2020-06-30)
 --------------------------------------------------------------------------------------------------
 
