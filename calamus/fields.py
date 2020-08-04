@@ -38,7 +38,11 @@ logger = logging.getLogger("calamus")
 
 @total_ordering
 class IRIReference(object):
-    """ Represent an IRI in a namespace."""
+    """ Represent an IRI in a namespace.
+
+    Args:
+        namespace (Namespace): The ``Namespace`` this IRI is part of.
+        name (str): the property name of this IRI."""
 
     def __init__(self, namespace, name):
         self.namespace = namespace
@@ -70,7 +74,11 @@ class IRIReference(object):
 
 
 class BlankNodeId(object):
-    """ A blank/anonymous node identifier."""
+    """ A blank/anonymous node identifier.
+
+    Args:
+        name (str): The name used to construct the blank node id. Default: ``None``.
+                    Will use a UUID if not supplied."""
 
     def __init__(self, name=None):
         self.name = name
@@ -82,7 +90,11 @@ class BlankNodeId(object):
 
 
 class Namespace(object):
-    """Represents a namespace/ontology."""
+    """Represents a namespace/ontology.
+
+    Args:
+        namespace (str): The base namespace URI for this namespace.
+    """
 
     def __init__(self, namespace):
         self.namespace = namespace
@@ -95,7 +107,14 @@ class Namespace(object):
 
 
 class _JsonLDField(fields.Field):
-    """Internal class that enables marshmallow fields to be serialized with a JsonLD field name."""
+    """Internal class that enables marshmallow fields to be serialized with a JsonLD field name.
+
+    Args:
+        field_name (IRIReference): The JSON-LD field name.
+        reverse (bool): Whether this is a reverse relation (via the ``@reverse`` keyword).
+        init_name (str): Name of this parameter in the ``__init__`` method, if it differs from the name on the class.
+        add_value_types (bool): Whether to add xsd value type information when serializing.
+    """
 
     def __init__(self, field_name=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,6 +122,7 @@ class _JsonLDField(fields.Field):
 
         self.reverse = kwargs.get("reverse", False)
         self.init_name = kwargs.get("init_name", None)
+        self.add_value_types = kwargs.get("add_value_types", False)
 
     @property
     def data_key(self):
@@ -118,6 +138,10 @@ class _JsonLDField(fields.Field):
     def _deserialize(self, value, attr, data, **kwargs):
         value = normalize_value(value)
         return super()._deserialize(value, attr, data, **kwargs)
+
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        return {}
 
 
 class Id(_JsonLDField, fields.String):
@@ -135,7 +159,7 @@ class String(_JsonLDField, fields.String):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#string"}
         return value
 
@@ -164,7 +188,7 @@ class Integer(_JsonLDField, fields.Integer):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#integer"}
         return value
 
@@ -177,7 +201,7 @@ class Float(_JsonLDField, fields.Float):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#float"}
         return value
 
@@ -190,7 +214,7 @@ class Boolean(_JsonLDField, fields.Boolean):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#boolean"}
         return value
 
@@ -204,7 +228,7 @@ class DateTime(_JsonLDField, fields.DateTime):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        if self.parent.opts.add_value_types:
+        if self.parent.opts.add_value_types or self.add_value_types:
             value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
         return value
 
@@ -228,6 +252,18 @@ class DateTime(_JsonLDField, fields.DateTime):
         raise self.make_error("invalid", input=value, obj_type=self.OBJ_TYPE)
 
 
+class Dict(_JsonLDField, fields.Dict):
+    """A dict field."""
+
+    pass
+
+
+class Raw(_JsonLDField, fields.Raw):
+    """A raw field."""
+
+    pass
+
+
 class Nested(_JsonLDField, fields.Nested):
     """A reference to one or more nested classes."""
 
@@ -236,8 +272,6 @@ class Nested(_JsonLDField, fields.Nested):
 
         if not isinstance(self.nested, list):
             self.nested = [self.nested]
-
-        self.nested = sorted(self.nested)
 
     @property
     def schema(self):
@@ -269,6 +303,7 @@ class Nested(_JsonLDField, fields.Nested):
                         original = _schema.exclude
                         _schema.exclude = set_class(self.exclude).union(original)
                     _schema._init_fields()
+                    _schema._visited = self.root._visited
                     self._schema["from"][rdf_type] = _schema
                     self._schema["to"][model] = _schema
                 else:
@@ -288,6 +323,7 @@ class Nested(_JsonLDField, fields.Nested):
                     model = schema_class.opts.model
                     if not rdf_type or not model:
                         raise ValueError("Both rdf_type and model need to be set on the schema for nested to work")
+
                     self._schema["from"][rdf_type] = schema_class(
                         many=False,
                         only=self.only,
@@ -296,6 +332,9 @@ class Nested(_JsonLDField, fields.Nested):
                         load_only=self._nested_normalized_option("load_only"),
                         dump_only=self._nested_normalized_option("dump_only"),
                         lazy=self.root.lazy,
+                        flattened=self.root.flattened,
+                        _visited=self.root._visited,
+                        _top_level=False,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
         return self._schema
@@ -306,6 +345,7 @@ class Nested(_JsonLDField, fields.Nested):
             ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
 
         schema = self.schema["to"][type(obj)]
+        schema._top_level = False
         return schema.dump(obj)
 
     def _serialize(self, nested_obj, attr, obj, many=False, **kwargs):
@@ -338,6 +378,9 @@ class Nested(_JsonLDField, fields.Nested):
 
         if schema.lazy:
             return lazy_object_proxy.Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial))
+        if not schema._all_objects and self.root._all_objects:
+            schema._all_objects = self.root._all_objects
+        schema._reversed_properties = self.root._reversed_properties
         return schema.load(value, unknown=self.unknown, partial=partial)
 
     def _load(self, value, data, partial=None, many=False):
@@ -372,6 +415,11 @@ class Nested(_JsonLDField, fields.Nested):
         if not data:
             raise ValueError("Couldn't dereference id {id}".format(id=value))
 
+        try:
+            data = dict(data)
+        except (TypeError, ValueError):
+            raise ValueError(f"Couldn't convert value '{data}' to dictionary.")
+
         if self.reverse:
             # we need to remove the property from the child when handling reverse nesting
             del data[attr]
@@ -401,9 +449,32 @@ class Nested(_JsonLDField, fields.Nested):
 
         return super()._deserialize(value, attr, data, **kwargs)
 
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        fields = {}
+
+        if self.reverse:
+            fields = {self.data_key: {type(s) for s in self.schema["from"].values()}}
+
+        for schema in self.schema["from"].values():
+            for k, v in schema._reversed_properties.items():
+                if k not in fields:
+                    fields[k] = set()
+                fields[k].update(v)
+
+        return fields
+
 
 class List(_JsonLDField, fields.List):
-    """An ordered list using the ``@list`` keyword."""
+    """A potentially ordered list using the ``@list`` keyword.
+
+    Args:
+        ordered (bool): Whether this is an ordered (via ``@list`` keyword) list.
+
+    Warning: The JSON-LD flattening algorithm does not combine ``@list`` entries when merging nodes.
+    So if you use ``ordered=True`` and flatten the output, and you have the node containing the list
+    in multiple places in the graph, the node will get merged but its lists wont get merged (you get a list of lists
+    instead), which means that the output can't be deserialized back to python objects."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -416,9 +487,13 @@ class List(_JsonLDField, fields.List):
     def _deserialize(self, value, attr, data, **kwargs) -> typing.List[typing.Any]:
         if isinstance(value, dict):  # an ordered list
             value = value["@list"]
-        return super(fields.List, self)._deserialize(value, attr, data, **kwargs)
+        return super(_JsonLDField, self)._deserialize(value, attr, data, **kwargs)
 
     @property
     def opts(self):
         """Return parent's opts."""
         return self.parent.opts
+
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        return self.inner._reversed_fields()

@@ -38,6 +38,7 @@ Dataverse
 de
 deployer
 deserialize
+deserialized
 deserializing
 discoverable
 Dockerfile

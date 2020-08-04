@@ -78,7 +78,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
     """Schema for a JsonLD class.
 
     Args:
-        flattened (bool): If the Json-LD should be loaded/dumped in flattened form
+        flattened (bool): If the JSON-LD should be loaded/dumped in flattened form
         lazy (bool): Enables lazy loading of nested attributes
 
     Example:
@@ -114,6 +114,8 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         flattened=False,
         lazy=False,
         _all_objects=None,
+        _visited=None,
+        _top_level=True,
     ):
         super().__init__(
             *args,
@@ -129,7 +131,19 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
         self.flattened = flattened
         self.lazy = lazy
+        self._top_level = _top_level
         self._all_objects = _all_objects
+
+        if _visited is None:
+            _visited = set()
+        self._visited = _visited
+
+        if all(not isinstance(self, v) for v in self._visited):
+            self._visited.add(type(self))
+            self._reversed_properties = self._reversed_fields()
+        else:
+            self._reversed_properties = {}
+
         self._init_names_mapping = {}
 
         if not self.opts.rdf_type or not self.opts.model:
@@ -161,7 +175,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
         ret["@type"] = normalize_type(rdf_type)
 
-        if self.flattened:
+        if self.flattened and self._top_level:
             ret = jsonld.flatten(ret)
 
         return ret
@@ -177,7 +191,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             if field_name not in d:
                 continue
 
-            if self._compare_ids(d[field_name], data["@id"]):
+            if normalize_id(data["@id"])[0] in normalize_id(d[field_name]):
                 ret.append(d["@id"])
 
         return ret
@@ -204,14 +218,15 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         index = index if index_errors else None
 
         if self.flattened and is_collection(data) and not self._all_objects:
-            new_data = []
             self._all_objects = {}
+            new_data = []
 
             for d in data:
                 self._all_objects[d["@id"]] = d
 
                 if self._compare_ids(d["@type"], self.opts.rdf_type):
                     new_data.append(d)
+
             data = new_data
 
             if len(data) == 1:
@@ -249,6 +264,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                     data = data[0]
 
             partial_is_collection = is_collection(partial)
+
             for attr_name, field_obj in self.load_fields.items():
                 field_name = field_obj.data_key if field_obj.data_key is not None else attr_name
 
@@ -299,7 +315,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                     if key in ["@type", "@reverse"]:
                         # ignore JsonLD meta fields
                         continue
-
+                    # ignore property if it's reversed and used elsewhere, for flattened case
+                    if key in self._reversed_properties and any(
+                        isinstance(self, s) for s in self._reversed_properties[key]
+                    ):
+                        continue
                     value = data[key]
                     if unknown == INCLUDE:
                         set_value(typing.cast(typing.Dict, ret), key, value)
@@ -313,6 +333,21 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         }
 
         return ret
+
+    def _reversed_fields(self):
+        """Get fields that are reversed in type hierarchy."""
+        if hasattr(self, "_reversed_properties"):
+            return self._reversed_properties
+
+        fields = {}
+
+        for _, field_obj in self.load_fields.items():
+            for k, v in field_obj._reversed_fields().items():
+                if k not in fields:
+                    fields[k] = set()
+                fields[k].update(v)
+
+        return fields
 
     @post_load
     def make_instance(self, data, **kwargs):
