@@ -383,8 +383,9 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
         unset_data = {}
         for key, value in missing_data.items():
-            if hasattr(instance, key) and not getattr(instance, key):
-                setattr(instance, key, value)
+            if hasattr(instance, key):
+                if not getattr(instance, key):
+                    setattr(instance, key, value)
             else:
                 unset_data[key] = value
 

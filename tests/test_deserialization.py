@@ -28,12 +28,15 @@ def test_simple_deserialization():
         def __init__(self, _id, name, *args, test="Bla", **kwargs):
             self._id = _id
             self.name = name
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
     schema = fields.Namespace("http://schema.org/")
 
     class BookSchema(JsonLDSchema):
         _id = fields.Id()
         name = fields.String(schema.name)
+        isbn = fields.String(schema.isbn)
 
         class Meta:
             rdf_type = schema.Book
@@ -43,12 +46,14 @@ def test_simple_deserialization():
         "@id": "http://example.com/books/1",
         "@type": "http://schema.org/Book",
         "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
+        "http://schema.org/isbn": "0-330-25864-8",
     }
 
     book = BookSchema().load(data)
 
     assert book._id == "http://example.com/books/1"
     assert book.name == "Hitchhikers Guide to the Galaxy"
+    assert book.isbn == "0-330-25864-8"
 
 
 def test_simple_deserialization_with_value_type():
