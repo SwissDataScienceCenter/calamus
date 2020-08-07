@@ -18,6 +18,17 @@
 Changes
 =======
 
+`0.3.2 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.1...v0.3.2>`__ (2020-08-07)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fixed an issue where deserializing models with keyword arguments in their constructor raises an
+  exception.
+  (`PR #39 <https://github.com/SwissDataScienceCenter/calamus/pull/39>`__)
+
+
 `0.3.1 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.0...v0.3.1>`__ (2020-08-03)
 --------------------------------------------------------------------------------------------------
 
