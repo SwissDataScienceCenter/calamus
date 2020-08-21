@@ -50,6 +50,6 @@ def test_simple_verification_deserialization():
         "http://schema.org/publishedYear": 1998,
     }
 
-    verified_data = BookSchema().validate_properties(data, "book_ontology.owl", return_valid_data=True)
+    verified_data = BookSchema().validate_properties(data, "tests/fixtures/book_ontology.owl", return_valid_data=True)
 
     book_verified = BookSchema().load(verified_data)

@@ -22,6 +22,34 @@ import typing
 from lazy_object_proxy.slots import Proxy as LazyProxy, _ProxyMetaType
 from lazy_object_proxy.compat import with_metaclass
 import rdflib
+from rdflib.plugins.sparql import prepareQuery
+
+
+JSON_LD_SYNTAX_TOKENS = [
+    "@id",
+    "@type",
+    "@base",
+    "@container",
+    "@context",
+    "@direction",
+    "@graph",
+    "@import",
+    "@included",
+    "@index",
+    "@json",
+    "@language",
+    "@list",
+    "@nest",
+    "@none",
+    "@prefix",
+    "@propagate",
+    "@protected",
+    "@reverse",
+    "@set",
+    "@value",
+    "@version",
+    "@vocab",
+]
 
 
 def normalize_id(
@@ -64,10 +92,19 @@ def normalize_value(value):
 
 
 def validate_field_properties(data, graph, query=None, mem={"valid": set(), "invalid": set()}):
-    """Validates if the field properties for data are present in the OWL ontology graph or not."""
-    """Returns dict with key valid having all valid properties (excluding @id and @type), invalid having all invalid properties"""
-    """A prepared query can be optionally passed so we don't need to keep parsing the query again and again for lists"""
-    """mem is for memoization for lists, to avoid querying the ontology again for properties we already know are valid or invalid"""
+    """Validates if the field properties for data are present in the OWL ontology graph or not.
+
+    Args:
+        data (dict): The data to validate.
+        graph (``rdflib.Graph``): The OWL ontology graph to validate against.
+        query (``rdflib.plugins.sparql.sparql.prepareQuery``): Optional prepared query (for performance reasons).
+        mem (dict): memoization for repeated calls.
+
+    Returns:
+        dict: Key ``valid`` has all valid properties (excluding @id and @type), ``invalid`` has all invalid properties
+    A prepared query can be optionally passed so we don't need to keep parsing the query again and again for lists
+    mem is for memoization for lists, to avoid querying the ontology again for properties we already know are valid or invalid
+    """
 
     res = {"valid": set(), "invalid": set()}
 
@@ -76,25 +113,30 @@ def validate_field_properties(data, graph, query=None, mem={"valid": set(), "inv
             "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
         )
 
-    if isinstance(data, dict) and isinstance(graph, rdflib.Graph):
-        for prop in data.keys():
-            if prop in mem["valid"]:
-                res["valid"].add(prop)
-                continue
-            if prop in mem["invalid"]:
-                res["invalid"].add(prop)
-                continue
+    if not isinstance(data, dict):
+        raise ValueError("`data` must be a dict.")
 
-            # after checking memoization
-            if prop != "@id" and prop != "@type":
-                p = rdflib.URIRef(prop)
-                qres = graph.query(query, initBindings={"property": p})
-                # any result implies the property is valid in the ontology
-                for q in qres:
-                    if q:
-                        res["valid"].add(prop)
-                    else:
-                        res["invalid"].add(prop)
+    if not isinstance(graph, rdflib.Graph):
+        raise ValueError("`graph` must be an `rdflib.Graph`")
+
+    for prop in data.keys():
+        if prop in mem["valid"]:
+            res["valid"].add(prop)
+            continue
+        if prop in mem["invalid"]:
+            res["invalid"].add(prop)
+            continue
+
+        # after checking memoization
+        if prop not in JSON_LD_SYNTAX_TOKENS:
+            p = rdflib.URIRef(prop)
+            qres = graph.query(query, initBindings={"property": p})
+            # any result implies the property is valid in the ontology
+            for q in qres:
+                if q:
+                    res["valid"].add(prop)
+                else:
+                    res["invalid"].add(prop)
     return res
 
 

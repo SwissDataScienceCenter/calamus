@@ -50,7 +50,9 @@ def test_simple_verification_serialization():
     )
 
     jsonld_pure = BookSchema().dump(book)
-    jsonld_validated = BookSchema().validate_properties(book, "book_ontology.owl", return_valid_data=True)
+    jsonld_validated = BookSchema().validate_properties(
+        book, "tests/fixtures/book_ontology.owl", return_valid_data=True
+    )
 
     assert "http://schema.org/name" in jsonld_validated
     assert jsonld_validated["http://schema.org/name"] == book.name

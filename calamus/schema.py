@@ -367,18 +367,21 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
         return ret
 
-    def validate_properties(self, data, graph, return_valid_data=False):
-        """Data can be a dictionary of JSONLD data, an object of model class, or a list of either of them"""
-        """Calls the validate_field_properties function depending on values of many and return flag"""
-        """If return_valid_vata is True, a valid form of the input data is returned, with all non valid properties deleted"""
-        """Else, a dict with valid key having all valid properties and invalid key having all invalid keys is returned"""
-        """The graph string should point to an OWL ontology"""
+    def validate_properties(self, data, ontology, return_valid_data=False):
+        """Validate JSON-LD against an ontology.
+
+        Args:
+            data (model|dict|list): JSON-LD data or model (or list of them).
+            ontology (str): Path to an ontology file.
+            return_valid_data (bool): Whether to delete invalid properties to return only valid data or else
+                returns a dict containing valid and invalid properties, Default: ``False``
+        """
 
         if isinstance(data, self.Meta.model) or all(isinstance(s, self.Meta.model) for s in data):
             data = self.dump(data)
 
         g = rdflib.Graph()
-        g.parse(graph)
+        g.parse(ontology)
 
         # q = prepareQuery("SELECT ?o WHERE { ?property ?x ?o . FILTER(regex(lcase(str(?o)),'#.*property.*')) }")
         q = prepareQuery(
@@ -392,13 +395,13 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             # res helps with memoization and is also the return value if return_valid_data is False
 
             valdata = []
-            for field in data:
-                fres = validate_field_properties(field, g, query=q, mem=res)
+            for obj in data:
+                fres = validate_field_properties(obj, g, query=q, mem=res)
                 res["valid"] = res["valid"].union(fres["valid"])
                 res["invalid"] = res["invalid"].union(fres["invalid"])
 
                 if return_valid_data:
-                    resf = field.copy()
+                    resf = obj.copy()
                     valdata.append(resf)
                     for inval in fres["invalid"]:
                         valdata[i].pop(inval, None)
@@ -406,17 +409,17 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
             if return_valid_data:
                 return valdata
-            else:
-                return res
-        else:
-            res = validate_field_properties(data, g, query=q)
-            if return_valid_data:
-                resd = data.copy()
-                for inv in res["invalid"]:
-                    resd.pop(inv, None)
-                return resd
-            else:
-                return res
+
+            return res
+
+        res = validate_field_properties(data, g, query=q)
+        if return_valid_data:
+            resd = data.copy()
+            for inv in res["invalid"]:
+                resd.pop(inv, None)
+            return resd
+
+        return res
 
     def _reversed_fields(self):
         """Get fields that are reversed in type hierarchy."""
