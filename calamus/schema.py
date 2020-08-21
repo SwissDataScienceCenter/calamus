@@ -371,7 +371,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         """Validate JSON-LD against an ontology.
 
         Args:
-            data (model|dict|list): JSON-LD data or model (or list of them).
+            data (Union[object, dict, list]): JSON-LD data or model (or list of them).
             ontology (str): Path to an ontology file.
             return_valid_data (bool): Whether to delete invalid properties to return only valid data or else
                 returns a dict containing valid and invalid properties, Default: ``False``

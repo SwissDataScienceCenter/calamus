@@ -159,7 +159,7 @@ You can validate properties in a python class during serialization using an OWL 
 
 
 
-You can also use this during desiralization.
+You can also use this during deserialization.
 ::
 
     class Book:
