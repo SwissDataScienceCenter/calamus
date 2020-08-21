@@ -52,4 +52,4 @@ def test_simple_verification_deserialization():
 
     verified_data = BookSchema().validate_properties(data, "tests/fixtures/book_ontology.owl", return_valid_data=True)
 
-    book_verified = BookSchema().load(verified_data)
+    assert BookSchema().load(verified_data)

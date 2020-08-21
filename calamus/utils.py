@@ -51,6 +51,10 @@ JSON_LD_SYNTAX_TOKENS = [
     "@vocab",
 ]
 
+ONTOLOGY_QUERY = prepareQuery(
+    "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+)
+
 
 def normalize_id(
     id_object: typing.Union[typing.Mapping[str, typing.Any], typing.Iterable[typing.Mapping[str, typing.Any]], str]
@@ -102,16 +106,12 @@ def validate_field_properties(data, graph, query=None, mem={"valid": set(), "inv
 
     Returns:
         dict: Key ``valid`` has all valid properties (excluding @id and @type), ``invalid`` has all invalid properties
-    A prepared query can be optionally passed so we don't need to keep parsing the query again and again for lists
-    mem is for memoization for lists, to avoid querying the ontology again for properties we already know are valid or invalid
     """
 
     res = {"valid": set(), "invalid": set()}
 
     if query is None:
-        query = prepareQuery(
-            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
-        )
+        query = ONTOLOGY_QUERY
 
     if not isinstance(data, dict):
         raise ValueError("`data` must be a dict.")
@@ -131,12 +131,10 @@ def validate_field_properties(data, graph, query=None, mem={"valid": set(), "inv
         if prop not in JSON_LD_SYNTAX_TOKENS:
             p = rdflib.URIRef(prop)
             qres = graph.query(query, initBindings={"property": p})
-            # any result implies the property is valid in the ontology
-            for q in qres:
-                if q:
-                    res["valid"].add(prop)
-                else:
-                    res["invalid"].add(prop)
+            if next(iter(qres), False):
+                res["valid"].add(prop)
+            else:
+                res["invalid"].add(prop)
     return res
 
 

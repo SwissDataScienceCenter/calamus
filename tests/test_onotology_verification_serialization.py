@@ -23,7 +23,6 @@ from calamus.schema import JsonLDSchema
 
 
 def test_simple_verification_serialization():
-
     """ The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned """
 
     class Book:
@@ -65,3 +64,16 @@ def test_simple_verification_serialization():
 
     assert "http://schema.org/publishedYear" not in jsonld_validated
     assert "http://schema.org/publishedYear" in jsonld_pure
+
+
+def test_namespace_verification():
+    """ The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned """
+
+    schema = fields.Namespace("http://schema.org/", ontology="tests/fixtures/book_ontology.owl")
+
+    with pytest.raises(ValueError, match="Property publishedYear does not exist in namespace http://schema.org/"):
+        schema.publishedYear
+
+    # this should not throw an exception, so the test passes
+    assert schema.name
+    assert schema.author
