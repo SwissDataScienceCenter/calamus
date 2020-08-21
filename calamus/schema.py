@@ -381,7 +381,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             data = self.dump(data)
 
         g = rdflib.Graph()
-        g.parse(ontology)
+        if not isinstance(ontology, list):
+            ontology = [ontology]
+
+        for o in ontology:
+            g.parse(o)
 
         # q = prepareQuery("SELECT ?o WHERE { ?property ?x ?o . FILTER(regex(lcase(str(?o)),'#.*property.*')) }")
         q = prepareQuery(
