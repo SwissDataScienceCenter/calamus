@@ -421,7 +421,7 @@ def test_alternative_date_format_deserialization(formats, value, deserialized_va
 
 def test_lazy_deserialization():
     """Tests that lazy deserialization works."""
-    import lazy_object_proxy
+    from calamus.utils import Proxy
 
     class Genre:
         def __init__(self, name):
@@ -488,7 +488,7 @@ def test_lazy_deserialization():
     assert a.name == "Miguel de Cervantes"
     book = a.books[0]
 
-    assert isinstance(book, lazy_object_proxy.Proxy)
+    assert isinstance(book, Proxy)
     assert " wrapping " not in repr(book)  # make sure proxy is not evaluated yet
 
     assert book.name == "Don Quixote"

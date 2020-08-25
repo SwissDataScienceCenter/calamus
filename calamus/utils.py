@@ -19,6 +19,8 @@
 
 import types
 import typing
+from lazy_object_proxy.slots import Proxy as LazyProxy, _ProxyMetaType
+from lazy_object_proxy.compat import with_metaclass
 
 
 def normalize_id(
@@ -58,3 +60,49 @@ def normalize_value(value):
         return value["@value"]
 
     return value
+
+
+class Proxy(LazyProxy, with_metaclass(_ProxyMetaType)):
+    """Proxy object to support lazy loading."""
+
+    __slots__ = "__target__", "__factory__", "__proxy_initialized__", "__proxy_schema__", "__proxy_original_data__"
+
+    def __init__(self, factory, schema, original_data):
+        object.__setattr__(self, "__factory__", factory)
+        object.__setattr__(self, "__proxy_initialized__", False)
+        object.__setattr__(self, "__proxy_schema__", schema)
+        object.__setattr__(self, "__proxy_original_data__", original_data)
+
+    @property
+    def __wrapped__(
+        self, __getattr__=object.__getattribute__, __setattr__=object.__setattr__, __delattr__=object.__delattr__
+    ):
+        try:
+            return __getattr__(self, "__target__")
+        except AttributeError:
+            try:
+                factory = __getattr__(self, "__factory__")
+            except AttributeError:
+                raise ValueError("Proxy hasn't been initiated: __factory__ is missing.")
+            target = factory()
+            __setattr__(self, "__target__", target)
+            __setattr__(self, "__proxy_initialized__", True)
+            return target
+
+    def __setattr__(self, name, value, __setattr__=object.__setattr__):
+        if hasattr(type(self), name):
+            __setattr__(self, name, value)
+        else:
+            setattr(self.__wrapped__, name, value)
+
+    def __getattr__(self, name):
+        if name in (
+            "__wrapped__",
+            "__factory__",
+            "__proxy_initialized__",
+            "__proxy_schema__",
+            "__proxy_original_data__",
+        ):
+            raise AttributeError(name)
+        else:
+            return getattr(self.__wrapped__, name)

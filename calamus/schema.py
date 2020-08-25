@@ -29,7 +29,7 @@ import inspect
 
 import typing
 
-from calamus.utils import normalize_id, normalize_type
+from calamus.utils import normalize_id, normalize_type, Proxy
 
 _T = typing.TypeVar("_T")
 
@@ -153,6 +153,20 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         """Serialize ``obj`` to jsonld."""
         if many and obj is not None:
             return [self._serialize(d, many=False) for d in typing.cast(typing.Iterable[_T], obj)]
+
+        if isinstance(obj, Proxy):
+            proxy_schema = obj.__proxy_schema__
+            if (
+                not obj.__proxy_initialized__
+                and isinstance(proxy_schema, type(self))
+                and proxy_schema.flattened == self.flattened
+            ):
+                # if proxy was not accessed and we use the same schema, return original data
+                return obj.__proxy_original_data__
+
+            # resolve Proxy object
+            obj = obj.__wrapped__
+
         ret = self.dict_class()
         for attr_name, field_obj in self.dump_fields.items():
             value = field_obj.serialize(attr_name, obj, accessor=self.get_attribute)
