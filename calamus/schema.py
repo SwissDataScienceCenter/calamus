@@ -22,6 +22,7 @@ from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE,
 from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
+from uuid import uuid4
 
 from pyld import jsonld
 
@@ -34,6 +35,11 @@ from calamus.utils import normalize_id, normalize_type, Proxy
 _T = typing.TypeVar("_T")
 
 
+def blank_node_id_strategy(ret, obj):
+    """``id_generation_strategy`` that creates random blank node ids."""
+    return "_:{id}".format(id=uuid4().hex)
+
+
 class JsonLDSchemaOpts(SchemaOpts):
     """Options class for `JsonLDSchema`.
 
@@ -41,6 +47,8 @@ class JsonLDSchemaOpts(SchemaOpts):
         - ``rdf_type``: The RDF type(s) for this schema.
         - ``model``: The python type this schema (de-)serializes.
         - ``add_value_types``: Whether to add ``@type`` information to scalar field values.
+        - ``id_generation_strategy``: A callable(dict, obj) that generates an Id on the fly if none is set.
+                                      With dict being the deserialized Json-LD dict and obj being the original object.
 
     """
 
@@ -54,6 +62,8 @@ class JsonLDSchemaOpts(SchemaOpts):
 
         self.model = getattr(meta, "model", None)
         self.add_value_types = getattr(meta, "add_value_types", False)
+
+        self.id_generation_strategy = getattr(meta, "id_generation_strategy", blank_node_id_strategy)
 
 
 class JsonLDSchemaMeta(SchemaMeta):
@@ -180,6 +190,9 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                 ret["@reverse"][key] = value
             else:
                 ret[key] = value
+
+        if "@id" not in ret or not ret["@id"]:
+            ret["@id"] = self.opts.id_generation_strategy(ret, obj)
 
         # add type
         rdf_type = self.opts.rdf_type
@@ -334,6 +347,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                         isinstance(self, s) for s in self._reversed_properties[key]
                     ):
                         continue
+
+                    if key == "@id" and self.opts.id_generation_strategy:
+                        # automatically generated ids don't need to be serialized
+                        continue
+
                     value = data[key]
                     if unknown == INCLUDE:
                         set_value(typing.cast(typing.Dict, ret), key, value)

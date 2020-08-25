@@ -26,7 +26,6 @@ from marshmallow import class_registry, utils
 from marshmallow.exceptions import ValidationError
 import logging
 import copy
-from uuid import uuid4
 
 import typing
 import types
@@ -71,22 +70,6 @@ class IRIReference(object):
 
     def __hash__(self):
         return str(self).__hash__()
-
-
-class BlankNodeId(object):
-    """ A blank/anonymous node identifier.
-
-    Args:
-        name (str): The name used to construct the blank node id. Default: ``None``.
-                    Will use a UUID if not supplied."""
-
-    def __init__(self, name=None):
-        self.name = name
-
-    def __str__(self):
-        if self.name:
-            return "_:{name}".format(name=self.name)
-        return "_:{uuid}".format(uuid=uuid4)
 
 
 class Namespace(object):
@@ -149,6 +132,32 @@ class Id(_JsonLDField, fields.String):
 
     def __init__(self, *args, **kwargs):
         super().__init__(field_name="@id", *args, **kwargs)
+
+
+class BlankNodeId(_JsonLDField, fields.String):
+    """A blank/anonymous node identifier."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+
+        return f"_:{value}"
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        if isinstance(value, str) and value.startswith("_:"):
+            value = value[2:]
+        return super()._deserialize(value, attr, data, **kwargs)
+
+    @property
+    def data_key(self):
+        """Return the (expanded) JsonLD field name."""
+        return "@id"
+
+    @data_key.setter
+    def data_key(self, value):
+        pass
 
 
 class String(_JsonLDField, fields.String):

@@ -18,7 +18,7 @@
 """Tests for serialization to python dicts JSON-LD."""
 
 import calamus.fields as fields
-from calamus.schema import JsonLDSchema
+from calamus.schema import JsonLDSchema, blank_node_id_strategy
 
 
 def test_simple_serialization():
@@ -425,30 +425,30 @@ def test_lazy_proxy_serialization():
     schema = fields.Namespace("https://schema.org/")
 
     class GenreSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
 
         class Meta:
             rdf_type = schema.Genre
             model = Genre
+            id_generation_strategy = blank_node_id_strategy
 
     class BookSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
         genre = fields.Nested(schema.genre, GenreSchema)
 
         class Meta:
             rdf_type = schema.Book
             model = Book
+            id_generation_strategy = blank_node_id_strategy
 
     class AuthorSchema(JsonLDSchema):
-        _id = fields.BlankNodeId()
         name = fields.String(schema.name)
         books = fields.Nested(schema.books, BookSchema, many=True)
 
         class Meta:
             rdf_type = schema.Author
             model = Author
+            id_generation_strategy = blank_node_id_strategy
 
     data = {
         "@type": ["https://schema.org/Author"],
@@ -460,6 +460,7 @@ def test_lazy_proxy_serialization():
             }
         ],
         "https://schema.org/name": "Miguel de Cervantes",
+        "@id": "_:dummyid",
     }
 
     a = AuthorSchema(lazy=True).load(data)
@@ -484,3 +485,91 @@ def test_lazy_proxy_serialization():
     assert isinstance(flat_book, list)
     assert len(flat_book) == 2
     assert book.__proxy_initialized__
+
+
+def test_blank_node_serialization():
+    """Test serialization with blank-node ids."""
+
+    class A(object):
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+    class B(object):
+        def __init__(self, _id, value):
+            self._id = _id
+            self.value = value
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.BlankNodeId()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    class BSchema(JsonLDSchema):
+        _id = fields.BlankNodeId()
+        value = fields.Nested(schema.specifiedBy, ASchema)
+
+        class Meta:
+            rdf_type = schema.B
+            model = B
+
+    b = B("dummyid2", A("dummyid1", "test"))
+
+    jsonld = BSchema().dump(b)
+
+    assert "@id" in jsonld
+    assert jsonld["@id"] == "_:dummyid2"
+    assert "http://schema.org/specifiedBy" in jsonld
+
+    dumped_a = jsonld["http://schema.org/specifiedBy"]
+
+    assert "@id" in dumped_a
+    assert dumped_a["@id"] == "_:dummyid1"
+
+
+def test_blank_node_id_generation():
+    """Test serialization with generated blank-node ids."""
+
+    class A(object):
+        def __init__(self, name):
+            self.name = name
+
+    class B(object):
+        def __init__(self, value):
+            self.value = value
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+            id_generation_strategy = blank_node_id_strategy
+
+    class BSchema(JsonLDSchema):
+        value = fields.Nested(schema.specifiedBy, ASchema)
+
+        class Meta:
+            rdf_type = schema.B
+            model = B
+            id_generation_strategy = blank_node_id_strategy
+
+    b = B(A("test"))
+
+    jsonld = BSchema().dump(b)
+
+    assert "@id" in jsonld
+    assert jsonld["@id"].startswith("_:")
+    assert "http://schema.org/specifiedBy" in jsonld
+
+    dumped_a = jsonld["http://schema.org/specifiedBy"]
+
+    assert "@id" in dumped_a
+    assert dumped_a["@id"].startswith("_:")

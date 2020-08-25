@@ -20,7 +20,7 @@
 import pytest
 
 import calamus.fields as fields
-from calamus.schema import JsonLDSchema
+from calamus.schema import JsonLDSchema, blank_node_id_strategy
 
 
 def test_simple_deserialization():
@@ -494,3 +494,48 @@ def test_lazy_deserialization():
     assert book.name == "Don Quixote"
     assert " wrapping " in repr(book)  # make sure proxy is evaluated
     assert book.genre.name == "Novel"
+
+
+def test_generated_id_deserialization():
+    """Test deserialization with `id_generation_strategy` used."""
+
+    class A(object):
+        def __init__(self, name):
+            self.name = name
+
+    class B(object):
+        def __init__(self, value):
+            self.value = value
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+            id_generation_strategy = blank_node_id_strategy
+
+    class BSchema(JsonLDSchema):
+        value = fields.Nested(schema.specifiedBy, ASchema)
+
+        class Meta:
+            rdf_type = schema.B
+            model = B
+            id_generation_strategy = blank_node_id_strategy
+
+    data = {
+        "@id": "_:cd54868014124a1e91420cbba92b507e",
+        "@type": ["http://schema.org/B"],
+        "http://schema.org/specifiedBy": {
+            "@id": "_:68bde922a8d1479cb66c705f7a0c8498",
+            "@type": ["http://schema.org/A"],
+            "http://schema.org/name": "test",
+        },
+    }
+
+    b = BSchema().load(data)
+
+    assert b.value
+    assert b.value.name == "test"
