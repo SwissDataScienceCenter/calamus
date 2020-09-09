@@ -18,6 +18,25 @@
 Changes
 =======
 
+`0.3.3 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.2...v0.3.3>`__ (2020-09-09)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added automated ``@id`` generation for on schema objects, allowing ids to be generated on the fly on serialization.
+  (`PR #23 <https://github.com/SwissDataScienceCenter/calamus/pull/23>`__)
+
+Fixes
+~~~~~
+
+- Fixed serialization of lazy-loading proxy-objects back to JSON-LD.
+  (`PR #30 <https://github.com/SwissDataScienceCenter/calamus/pull/30>`__)
+
+- Fixed ``BlankNodeField`` to be a normal field like the ``Id`` field.
+  (`PR #23 <https://github.com/SwissDataScienceCenter/calamus/pull/23>`__)
+
+
 `0.3.2 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.1...v0.3.2>`__ (2020-08-07)
 --------------------------------------------------------------------------------------------------
 
