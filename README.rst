@@ -66,7 +66,9 @@ Declare schemes
 ---------------
 You can declare a schema for serialization like
 ::
-
+    from calamus import fields
+    from calamus.schema import JsonLDSchema
+    
     schema = fields.Namespace("http://schema.org/")
 
     class BookSchema(JsonLDSchema):
