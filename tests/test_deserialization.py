@@ -496,6 +496,89 @@ def test_lazy_deserialization():
     assert book.genre.name == "Novel"
 
 
+def test_lazy_flattened_deserialization():
+    """Tests that lazy deserialization works."""
+    from calamus.utils import Proxy
+
+    class Genre:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+        def test(self):
+            return self.name
+
+        def __call__(self):
+            return self.name
+
+    class Book:
+        def __init__(self, _id, name, genre):
+            self._id = _id
+            self.name = name
+            self.genre = genre
+
+    class Author:
+        def __init__(self, _id, name, book):
+            self._id = _id
+            self.name = name
+            self.book = book
+
+    schema = fields.Namespace("https://schema.org/")
+
+    class GenreSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.Genre
+            model = Genre
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        genre = fields.Nested(schema.genre, GenreSchema)
+
+        class Meta:
+            rdf_type = schema.Book
+            model = Book
+
+    class AuthorSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        book = fields.Nested(schema.books, BookSchema)
+
+        class Meta:
+            rdf_type = schema.Author
+            model = Author
+
+    data = [
+        {
+            "@id": "http://example.org/author1",
+            "@type": ["https://schema.org/Author"],
+            "https://schema.org/books": {"@id": "http://example.org/book1"},
+            "https://schema.org/name": "Miguel de Cervantes",
+        },
+        {
+            "@id": "http://example.org/book1",
+            "@type": ["https://schema.org/Book"],
+            "https://schema.org/genre": {"@id": "http://example.org/genre1"},
+            "https://schema.org/name": "Don Quixote",
+        },
+        {"@id": "http://example.org/genre1", "@type": ["https://schema.org/Genre"], "https://schema.org/name": "Novel"},
+    ]
+
+    a = AuthorSchema(lazy=True, flattened=True).load(data)
+
+    assert a.name == "Miguel de Cervantes"
+
+    assert isinstance(a.book, Proxy)
+    assert " wrapping " not in repr(a.book)  # make sure proxy is not evaluated yet
+
+    assert a.book.name == "Don Quixote"
+    assert " wrapping " in repr(a.book)  # make sure proxy is evaluated
+    assert a.book.genre.name == "Novel"
+
+
 def test_generated_id_deserialization():
     """Test deserialization with `id_generation_strategy` used."""
 

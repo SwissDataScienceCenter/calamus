@@ -413,12 +413,12 @@ class Nested(_JsonLDField, fields.Nested):
 
         if not schema:
             ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
-
-        if schema.lazy:
-            return Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial), schema, value)
         if not schema._all_objects and self.root._all_objects:
             schema._all_objects = self.root._all_objects
         schema._reversed_properties = self.root._reversed_properties
+
+        if schema.lazy:
+            return Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial), schema, value)
         return schema.load(value, unknown=self.unknown, partial=partial)
 
     def _load(self, value, data, partial=None, many=False):
