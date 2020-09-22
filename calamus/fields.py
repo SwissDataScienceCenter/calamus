@@ -342,6 +342,7 @@ class Nested(_JsonLDField, fields.Nested):
                         dump_only=self._nested_normalized_option("dump_only"),
                         lazy=self.root.lazy,
                         flattened=self.root.flattened,
+                        session=self.root.session,
                         _visited=self.root._visited,
                         _top_level=False,
                     )
@@ -449,7 +450,11 @@ class Nested(_JsonLDField, fields.Nested):
 
     def _dereference_single_id(self, value, attr, **kwargs):
         """Dereference a single id."""
-        data = kwargs["_all_objects"].get(value, None)
+        session = kwargs.get("session")
+        if session:
+            data = session.fetch_by_id(value)
+        else:
+            data = kwargs["_all_objects"].get(value, None)
         if not data:
             raise ValueError("Couldn't dereference id {id}".format(id=value))
 

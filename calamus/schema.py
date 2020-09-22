@@ -123,6 +123,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         unknown=None,
         flattened=False,
         lazy=False,
+        session=None,
         _all_objects=None,
         _visited=None,
         _top_level=True,
@@ -139,7 +140,8 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             unknown=unknown,
         )
 
-        self.flattened = flattened
+        self.session = session
+        self.flattened = flattened | (session is not None)
         self.lazy = lazy
         self._top_level = _top_level
         self._all_objects = _all_objects
@@ -326,6 +328,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                 d_kwargs["_all_objects"] = self._all_objects
                 d_kwargs["flattened"] = self.flattened
                 d_kwargs["lazy"] = self.lazy
+                d_kwargs["session"] = self.session
                 getter = lambda val: field_obj.deserialize(val, field_name, data, **d_kwargs)
                 value = self._call_and_store(
                     getter_func=getter, data=raw_value, field_name=field_name, error_store=error_store, index=index,
