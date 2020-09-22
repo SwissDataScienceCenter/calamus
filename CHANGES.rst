@@ -18,6 +18,16 @@
 Changes
 =======
 
+`0.3.4 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.3...v0.3.4>`__ (2020-09-22)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fixed lazy-loading when using flattened JSON-LD
+  (`PR #45 <https://github.com/SwissDataScienceCenter/calamus/pull/45>`__)
+
+
 `0.3.3 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.2...v0.3.3>`__ (2020-09-09)
 --------------------------------------------------------------------------------------------------
 
