@@ -43,7 +43,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Development Status :: 4 - Beta",
     ],
-    packages=["calamus"],
+    packages=["calamus", "calamus.backends"],
     package_dir={"": "."},
     package_data={},
     install_requires=["lazy-object-proxy==1.*,>=1.4.3", "marshmallow==3.*,>=3.5.1", "pyld==2.*,>=2.0.2"],
@@ -56,5 +56,6 @@ setup(
             "pytest-black==0.*,>=0.3.9",
         ],
         "docs": ["sphinx==3.*,>=3.0.3", "sphinx-rtd-theme==0.*,>=0.4.3", "sphinxcontrib-spelling==5.*,>=5.0.0"],
+        "neo4j": ["py2neo[neo4j]==2020.*,>=2020.0.0", "requests[neo4j]==2.*,>=2.24.0"],
     },
 )
