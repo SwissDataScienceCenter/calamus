@@ -17,6 +17,7 @@
 # limitations under the License.
 """Calamus db backends."""
 
+
 class CalamusDbBackend:
     def __init__(self, **config):
         """Initialize provided the backend config."""

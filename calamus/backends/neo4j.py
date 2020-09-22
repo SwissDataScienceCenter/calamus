@@ -17,13 +17,20 @@
 # limitations under the License.
 """Neo4J connection utils."""
 import json
-import requests
+
+try:
+    import requests
+except ImportError:
+    pass
 
 from urllib.parse import quote
 
-import py2neo
-from py2neo import Graph
-from py2neo.database.work import ClientError
+try:
+    import py2neo
+    from py2neo import Graph
+    from py2neo.database.work import ClientError
+except ImportError:
+    pass
 
 from . import CalamusDbBackend
 
@@ -81,10 +88,6 @@ class CalamusNeo4JBackend(CalamusDbBackend):
         if not self.graph:
             raise RuntimeError("The graph must first be initialized.")
 
-        # cypher = f"""
-        # MATCH path=((n {{uri: "{identifier}"}}) -[*1..]-> ()) RETURN path
-        # """
-
         cypher = f"""
         MATCH path=((n {{uri: "{identifier}"}}) -[*0..1]-> ()) RETURN path
         """
@@ -97,7 +100,7 @@ class CalamusNeo4JBackend(CalamusDbBackend):
 
         # grab just the data we asked for - depending on the node, we might have a @graph or just
         # data for the single node
-        if data and '@graph' in data:
-            data = [x for x in data.get('@graph') if x.get('@id') == identifier].pop()
+        if data and "@graph" in data:
+            data = [x for x in data.get("@graph") if x.get("@id") == identifier].pop()
 
         return data
