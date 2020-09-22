@@ -64,11 +64,10 @@ class CalamusNeo4JBackend(CalamusDbBackend):
         except ClientError:
             pass
 
-        ## Comment: seems like setting prefixes is maybe not something we'd want to do
-        # initialize prefixes
-        #     g.call.n10s.nsprefixes.add("prov", "http://www.w3.org/ns/prov#")
-        #     g.call.n10s.nsprefixes.add("renku", "https://swissdatasciencecenter.github.io/renku-ontology#")
-        #     g.call.n10s.nsprefixes.add("wfprov", "http://purl.org/wf4ever/wfprov#")
+        # TODO: provide options for initializing prefixes
+        # for prefix, prefix_uri in prefixes:
+        #     g.call.n10s.nsprefixes.add(f"{prefix}", f"{prefix_uri}")
+
         return self.graph
 
     def commit(self, entity, schema):
