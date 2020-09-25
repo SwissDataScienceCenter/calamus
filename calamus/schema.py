@@ -367,12 +367,12 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
         return ret
 
-    def validate_properties(self, data, ontology, return_valid_data=False):
+    def validate_properties(self, data, ontology, return_valid_data=False, strict=False):
         """Validate JSON-LD against an ontology.
 
         Args:
             data (Union[object, dict, list]): JSON-LD data or model (or list of them).
-            ontology (str): Path to an ontology file.
+            ontology (str): Path/URI to an ontology file.
             return_valid_data (bool): Whether to delete invalid properties to return only valid data or else
                 returns a dict containing valid and invalid properties, Default: ``False``
         """
@@ -387,16 +387,16 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         for o in ontology:
             g.parse(o)
 
-        # q = prepareQuery("SELECT ?o WHERE { ?property ?x ?o . FILTER(regex(lcase(str(?o)),'#.*property.*')) }")
+        # NOTE: the query checks if the property we are passing is a property defined in the ontology
         q = prepareQuery(
-            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type "
+            "<http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
         )
-        # query checks property we are passing is a property in the ontology loaded or not
 
         if self.many:
             i = 0
+            # NOTE: res helps with memoization and is also the return value if return_valid_data is False
             res = {"valid": set(), "invalid": set()}
-            # res helps with memoization and is also the return value if return_valid_data is False
 
             valdata = []
             for obj in data:
@@ -411,12 +411,21 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                         valdata[i].pop(inval, None)
                     i += 1
 
+            if strict and res["invalid"]:
+                invalid_props = ", ".join(res["invalid"])
+                raise ValueError(f"Invalid properties found in ontology: {invalid_props}")
+
             if return_valid_data:
                 return valdata
 
             return res
 
         res = validate_field_properties(data, g, query=q)
+
+        if strict and res["invalid"]:
+            invalid_props = ", ".join(res["invalid"])
+            raise ValueError(f"Invalid properties found in ontology: {invalid_props}")
+
         if return_valid_data:
             resd = data.copy()
             for inv in res["invalid"]:

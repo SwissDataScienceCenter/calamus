@@ -19,14 +19,12 @@
 
 from functools import total_ordering
 
-import lazy_object_proxy
 import marshmallow.fields as fields
 from marshmallow.base import SchemaABC
 from marshmallow import class_registry, utils
 from marshmallow.exceptions import ValidationError
 import logging
 import copy
-from uuid import uuid4
 
 import rdflib
 

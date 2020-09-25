@@ -49,6 +49,12 @@ def test_simple_verification_serialization():
     )
 
     jsonld_pure = BookSchema().dump(book)
+
+    with pytest.raises(ValueError, match="Invalid properties found in ontology.*"):
+        jsonld_validated = BookSchema().validate_properties(
+            book, "tests/fixtures/book_ontology.owl", return_valid_data=True, strict=True
+        )
+
     jsonld_validated = BookSchema().validate_properties(
         book, "tests/fixtures/book_ontology.owl", return_valid_data=True
     )

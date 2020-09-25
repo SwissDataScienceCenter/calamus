@@ -52,7 +52,8 @@ JSON_LD_SYNTAX_TOKENS = [
 ]
 
 ONTOLOGY_QUERY = prepareQuery(
-    "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type <http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+    "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type "
+    "<http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
 )
 
 
@@ -95,12 +96,12 @@ def normalize_value(value):
     return value
 
 
-def validate_field_properties(data, graph, query=None, mem={"valid": set(), "invalid": set()}):
+def validate_field_properties(data, ontology, query=None, mem={"valid": set(), "invalid": set()}):
     """Validates if the field properties for data are present in the OWL ontology graph or not.
 
     Args:
         data (dict): The data to validate.
-        graph (``rdflib.Graph``): The OWL ontology graph to validate against.
+        ontology (``rdflib.Graph``): The OWL ontology graph to validate against.
         query (``rdflib.plugins.sparql.sparql.prepareQuery``): Optional prepared query (for performance reasons).
         mem (dict): memoization for repeated calls.
 
@@ -116,7 +117,7 @@ def validate_field_properties(data, graph, query=None, mem={"valid": set(), "inv
     if not isinstance(data, dict):
         raise ValueError("`data` must be a dict.")
 
-    if not isinstance(graph, rdflib.Graph):
+    if not isinstance(ontology, rdflib.Graph):
         raise ValueError("`graph` must be an `rdflib.Graph`")
 
     for prop in data.keys():
@@ -130,7 +131,7 @@ def validate_field_properties(data, graph, query=None, mem={"valid": set(), "inv
         # after checking memoization
         if prop not in JSON_LD_SYNTAX_TOKENS:
             p = rdflib.URIRef(prop)
-            qres = graph.query(query, initBindings={"property": p})
+            qres = ontology.query(query, initBindings={"property": p})
             if next(iter(qres), False):
                 res["valid"].add(prop)
             else:
