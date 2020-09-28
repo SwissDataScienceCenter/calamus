@@ -55,7 +55,7 @@ Usage
 
 Assuming you have a class like
 
-::
+.. code-block:: python
 
     class Book:
         def __init__(self, _id, name):
@@ -65,11 +65,12 @@ Assuming you have a class like
 Declare schemes
 ---------------
 You can declare a schema for serialization like
-::
+
+.. code-block:: python
 
     from calamus import fields
     from calamus.schema import JsonLDSchema
-    
+
     schema = fields.Namespace("http://schema.org/")
 
     class BookSchema(JsonLDSchema):
@@ -90,7 +91,7 @@ Serializing objects ("Dumping")
 
 You can now easily serialize python classes to JSON-LD
 
-::
+.. code-block:: python
 
     book = Book(_id="http://example.com/books/1", name="Ilias")
     jsonld_dict = BookSchema().dump(book)
@@ -108,7 +109,7 @@ Deserializing objects ("Loading")
 
 You can also easily deserialize JSON-LD to python objects
 
-::
+.. code-block:: python
 
     data = {
         "@id": "http://example.com/books/1",
@@ -204,6 +205,39 @@ The function validate_properties has 3 arguments: ``data``, ``ontology`` and ``r
 ``ontology`` is a string pointing to the OWL ontology's location (path or URI).
 
 ``return_valid_data`` is an optional argument with the default value ``False``. Default behavior is to return dictionary with valid and invalid properties. Setting this to True returns the JSON-LD with only validated properties.
+
+Annotations
+-----------
+
+Classes can also be annotated directly with schema information, removing the need to have a separate schema. This
+can be done by setting the ``metaclass`` of the model to ``JsonLDAnnotation``.
+
+.. code-block:: python
+
+    import datetime.datetime as dt
+
+    from calamus import JsonLDAnnotation
+    import calamus.fields as fields
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class User(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        birth_date = fields.Date(schema.birthDate, default=dt.now)
+        name = fields.String(schema.name, default=lambda: "John")
+
+        class Meta:
+            rdf_type = schema.Person
+
+    user = User()
+
+    # dumping
+    User.schema().dump(user)
+    # or
+    user.dump()
+
+    # loading
+    u = User.schema().load({"_id": "http://example.com/user/1", "name": "Bill", "birth_date": "1970-01-01 00:00"})
 
 Support
 =======

@@ -302,7 +302,7 @@ class Nested(_JsonLDField, fields.Nested):
         nested = []
 
         for n in self.nested:
-            if issubclass(n, JsonLDSchema):
+            if isinstance(n, str) or issubclass(n, JsonLDSchema):
                 nested.append(n)
             else:
                 if hasattr(n, "__calamus_schema__"):
