@@ -64,7 +64,7 @@ Fixes
 Features
 ~~~~~~~~
 
-- Added a ``Dict`` field that simply passes along the contained dictionary (which should be valid Json-LD already).
+- Added a ``Dict`` field that simply passes along the contained dictionary (which should be valid JSON-LD already).
   Added a ``Raw`` field that just returns the contained value.
   Added support for ``add_value_types`` at the field level.
   (`PR #31 <https://github.com/SwissDataScienceCenter/calamus/pull/31>`__)

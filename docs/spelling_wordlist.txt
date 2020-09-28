@@ -88,6 +88,7 @@ lefthand
 lfs
 LD
 Matlab
+memoization
 metadata
 microservices
 middleware
@@ -150,6 +151,7 @@ ui
 unflattening
 untracked
 untracked
+URI
 username
 versioned
 versioning
