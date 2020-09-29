@@ -90,6 +90,7 @@ LD
 Matlab
 memoization
 metadata
+metaclass
 microservices
 middleware
 minikube
