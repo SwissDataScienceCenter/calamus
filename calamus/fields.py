@@ -276,6 +276,58 @@ class DateTime(_JsonLDField, fields.DateTime):
         raise self.make_error("invalid", input=value, obj_type=self.OBJ_TYPE)
 
 
+class NaiveDateTime(_JsonLDField, fields.NaiveDateTime):
+    """A naive date/time field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types or self.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
+        return value
+
+
+class AwareDateTime(_JsonLDField, fields.AwareDateTime):
+    """A naive date/time field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types or self.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#dateTime"}
+        return value
+
+
+class Time(_JsonLDField, fields.Time):
+    """A naive date/time field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types or self.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#time"}
+        return value
+
+
+class Date(_JsonLDField, fields.Date):
+    """A naive date/time field."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _serialize(self, value, attr, obj, **kwargs):
+        value = super()._serialize(value, attr, obj, **kwargs)
+        if self.parent.opts.add_value_types or self.add_value_types:
+            value = {"@value": value, "@type": "http://www.w3.org/2001/XMLSchema#date"}
+        return value
+
+
 class Dict(_JsonLDField, fields.Dict):
     """A dict field."""
 
