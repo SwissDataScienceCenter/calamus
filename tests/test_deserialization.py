@@ -622,3 +622,52 @@ def test_generated_id_deserialization():
 
     assert b.value
     assert b.value.name == "test"
+
+
+def test_date_time_deserialization():
+    """Tests serialization of different date/time fields."""
+
+    class A(object):
+        def __init__(self, _id, dt, naive_dt, aware_dt, date, time):
+            super().__init__()
+            self._id = _id
+            self.dt = dt
+            self.naive_dt = naive_dt
+            self.aware_dt = aware_dt
+            self.date = date
+            self.time = time
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        dt = fields.DateTime(schema.dateTime)
+        naive_dt = fields.NaiveDateTime(schema.naiveDateTime)
+        aware_dt = fields.AwareDateTime(schema.awareDateTime)
+        date = fields.Date(schema.date)
+        time = fields.Time(schema.time)
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    import datetime as dt
+
+    data = {
+        "@id": "http://example.com/1",
+        "@type": ["http://schema.org/A"],
+        "http://schema.org/awareDateTime": "2020-06-06T23:59:59+01:00",
+        "http://schema.org/date": "2002-12-31",
+        "http://schema.org/dateTime": "2007-12-06T16:29:43",
+        "http://schema.org/naiveDateTime": "2020-08-18T12:45:43",
+        "http://schema.org/time": "12:10:30",
+    }
+
+    a = ASchema().load(data)
+
+    assert a._id == "http://example.com/1"
+    assert a.dt == dt.datetime(2007, 12, 6, 16, 29, 43)
+    assert a.naive_dt == dt.datetime(2020, 8, 18, 12, 45, 43)
+    assert a.aware_dt == dt.datetime(2020, 6, 6, 23, 59, 59, tzinfo=dt.timezone(dt.timedelta(hours=1)))
+    assert a.date == dt.date(2002, 12, 31)
+    assert a.time == dt.time(12, 10, 30)
