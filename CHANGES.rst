@@ -18,6 +18,35 @@
 Changes
 =======
 
+`0.3.4 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.3...v0.3.4>`__ (2020-09-22)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fixed lazy-loading when using flattened JSON-LD
+  (`PR #45 <https://github.com/SwissDataScienceCenter/calamus/pull/45>`__)
+
+
+`0.3.3 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.2...v0.3.3>`__ (2020-09-09)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added automated ``@id`` generation for on schema objects, allowing ids to be generated on the fly on serialization.
+  (`PR #23 <https://github.com/SwissDataScienceCenter/calamus/pull/23>`__)
+
+Fixes
+~~~~~
+
+- Fixed serialization of lazy-loading proxy-objects back to JSON-LD.
+  (`PR #30 <https://github.com/SwissDataScienceCenter/calamus/pull/30>`__)
+
+- Fixed ``BlankNodeField`` to be a normal field like the ``Id`` field.
+  (`PR #23 <https://github.com/SwissDataScienceCenter/calamus/pull/23>`__)
+
+
 `0.3.2 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.1...v0.3.2>`__ (2020-08-07)
 --------------------------------------------------------------------------------------------------
 
@@ -35,7 +64,7 @@ Fixes
 Features
 ~~~~~~~~
 
-- Added a ``Dict`` field that simply passes along the contained dictionary (which should be valid Json-LD already).
+- Added a ``Dict`` field that simply passes along the contained dictionary (which should be valid JSON-LD already).
   Added a ``Raw`` field that just returns the contained value.
   Added support for ``add_value_types`` at the field level.
   (`PR #31 <https://github.com/SwissDataScienceCenter/calamus/pull/31>`__)

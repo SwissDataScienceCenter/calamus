@@ -67,6 +67,9 @@ Declare schemes
 You can declare a schema for serialization like
 ::
 
+    from calamus import fields
+    from calamus.schema import JsonLDSchema
+    
     schema = fields.Namespace("http://schema.org/")
 
     class BookSchema(JsonLDSchema):
@@ -115,6 +118,92 @@ You can also easily deserialize JSON-LD to python objects
     book = BookSchema().load(data)
     #<Book(_id="http://example.com/books/1", name="Ilias")>
 
+Validation of properties in a namespace using an OWL ontology
+-------------------------------------------------------------
+
+You can validate properties in a python class during serialization using an OWL ontology. The ontology used in the example below doesn't have ``publishedYear`` defined as a property.
+::
+
+    class Book:
+        def __init__(self, _id, name, author, publishedYear):
+            self._id = _id
+            self.name = name
+            self.author = author
+            self.publishedYear = publishedYear
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        author = fields.String(schema.author)
+        publishedYear = fields.Integer(schema.publishedYear)
+
+        class Meta:
+           rdf_type = schema.Book
+           model = Book
+
+    book = Book(id="http://example.com/books/2", name="Outliers", author="Malcolm Gladwell", publishedYear=2008)
+
+    data = {
+        "@id": "http://example.com/books/3",
+        "@type": "http://schema.org/Book",
+        "http://schema.org/name" : "Harry Potter & The Prisoner of Azkaban",
+        "http://schema.org/author" : "J. K. Rowling",
+        "http://schema.org/publishedYear" : 1999
+    }
+
+    valid_invalid_dict = BookSchema().validate_properties(
+        data,
+        "tests/fixtures/book_ontology.owl"
+    )
+    # The ontology doesn't have a publishedYear property
+    # {'valid': {'http://schema.org/author', 'http://schema.org/name'}, 'invalid': {'http://schema.org/publishedYear'}}
+
+    validated_json = BookSchema().validate_properties(book, "tests/fixtures/book_ontology.owl", return_valid_data=True)
+    #{'@id': 'http://example.com/books/2', '@type': ['http://schema.org/Book'], 'http://schema.org/name': 'Outliers', 'http://schema.org/author': 'Malcolm Gladwell'}
+
+
+
+You can also use this during deserialization.
+::
+
+    class Book:
+        def __init__(self, _id, name, author):
+            self._id = _id
+            self.name = name
+            self.author = author
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        author = fields.String(schema.author)
+
+        class Meta:
+            rdf_type = schema.Book
+            model = Book
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": "http://schema.org/Book",
+        "http://schema.org/name": "Harry Potter & The Chamber of Secrets",
+        "http://schema.org/author": "J. K. Rowling",
+        "http://schema.org/publishedYear": 1998,
+    }
+
+    verified_data = BookSchema().validate_properties(data, "tests/fixtures/book_ontology.owl", return_valid_data=True)
+
+    book_verified = BookSchema().load(verified_data)
+    #<Book(_id="http://example.com/books/1", name="Harry Potter & The Chamber of Secrets", author="J. K. Rowling")>
+
+
+The function validate_properties has 3 arguments: ``data``, ``ontology`` and ``return_valid_data``.
+
+``data`` can be a Json-LD, a python object of the schema's model class, or a list of either of those.
+
+``ontology`` is a string pointing to the OWL ontology's location (path or URI).
+
+``return_valid_data`` is an optional argument with the default value ``False``. Default behavior is to return dictionary with valid and invalid properties. Setting this to True returns the JSON-LD with only validated properties.
 
 Support
 =======

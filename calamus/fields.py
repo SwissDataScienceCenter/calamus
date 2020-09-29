@@ -19,7 +19,6 @@
 
 from functools import total_ordering
 
-import lazy_object_proxy
 import marshmallow.fields as fields
 from marshmallow.base import SchemaABC
 from marshmallow import class_registry, utils
@@ -27,10 +26,12 @@ from marshmallow.exceptions import ValidationError
 import logging
 import copy
 
+import rdflib
+
 import typing
 import types
 
-from calamus.utils import normalize_type, normalize_value, Proxy
+from calamus.utils import normalize_type, normalize_value, ONTOLOGY_QUERY, Proxy
 
 logger = logging.getLogger("calamus")
 
@@ -77,13 +78,27 @@ class Namespace(object):
 
     Args:
         namespace (str): The base namespace URI for this namespace.
+        ontology (str): Path to an ontology(OWL) file for this namespace.
     """
 
-    def __init__(self, namespace):
+    def __init__(self, namespace, ontology=None):
         self.namespace = namespace
+        self.ontology = None
+
+        if ontology:
+            g = rdflib.Graph()
+            self.ontology = g.parse(ontology)
 
     def __getattr__(self, name):
-        return IRIReference(self, name)
+        reference = IRIReference(self, name)
+
+        if self.ontology:
+            p = rdflib.URIRef(str(reference))
+            qres = self.ontology.query(ONTOLOGY_QUERY, initBindings={"property": p})
+            if not next(iter(qres), False):
+                raise ValueError(f"Property {name} does not exist in namespace {self.namespace}")
+
+        return reference
 
     def __str__(self):
         return self.namespace
@@ -465,12 +480,12 @@ class Nested(_JsonLDField, fields.Nested):
 
         if not schema:
             ValueError("Type {} not found in {}.{}".format(value["@type"], type(self.parent), self.data_key))
-
-        if schema.lazy:
-            return Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial), schema, value)
         if not schema._all_objects and self.root._all_objects:
             schema._all_objects = self.root._all_objects
         schema._reversed_properties = self.root._reversed_properties
+
+        if schema.lazy:
+            return Proxy(lambda: schema.load(value, unknown=self.unknown, partial=partial), schema, value)
         return schema.load(value, unknown=self.unknown, partial=partial)
 
     def _load(self, value, data, partial=None, many=False):

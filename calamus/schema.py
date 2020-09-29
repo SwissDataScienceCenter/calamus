@@ -22,15 +22,16 @@ from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE,
 from marshmallow import post_load
 from collections.abc import Mapping
 from marshmallow.error_store import ErrorStore
+from rdflib.plugins.sparql import prepareQuery
 from uuid import uuid4
-
+import rdflib
 from pyld import jsonld
 
 import inspect
 
 import typing
 
-from calamus.utils import normalize_id, normalize_type, Proxy
+from calamus.utils import normalize_id, normalize_type, Proxy, validate_field_properties
 
 _T = typing.TypeVar("_T")
 
@@ -365,6 +366,73 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         }
 
         return ret
+
+    def validate_properties(self, data, ontology, return_valid_data=False, strict=False):
+        """Validate JSON-LD against an ontology.
+
+        Args:
+            data (Union[object, dict, list]): JSON-LD data or model (or list of them).
+            ontology (str): Path/URI to an ontology file.
+            return_valid_data (bool): Whether to delete invalid properties to return only valid data or else
+                returns a dict containing valid and invalid properties, Default: ``False``
+        """
+
+        if isinstance(data, self.Meta.model) or all(isinstance(s, self.Meta.model) for s in data):
+            data = self.dump(data)
+
+        g = rdflib.Graph()
+        if not isinstance(ontology, list):
+            ontology = [ontology]
+
+        for o in ontology:
+            g.parse(o)
+
+        # NOTE: the query checks if the property we are passing is a property defined in the ontology
+        q = prepareQuery(
+            "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type "
+            "<http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+        )
+
+        if self.many:
+            i = 0
+            # NOTE: res helps with memoization and is also the return value if return_valid_data is False
+            res = {"valid": set(), "invalid": set()}
+
+            valdata = []
+            for obj in data:
+                fres = validate_field_properties(obj, g, query=q, mem=res)
+                res["valid"] = res["valid"].union(fres["valid"])
+                res["invalid"] = res["invalid"].union(fres["invalid"])
+
+                if return_valid_data:
+                    resf = obj.copy()
+                    valdata.append(resf)
+                    for inval in fres["invalid"]:
+                        valdata[i].pop(inval, None)
+                    i += 1
+
+            if strict and res["invalid"]:
+                invalid_props = ", ".join(res["invalid"])
+                raise ValueError(f"Invalid properties found in ontology: {invalid_props}")
+
+            if return_valid_data:
+                return valdata
+
+            return res
+
+        res = validate_field_properties(data, g, query=q)
+
+        if strict and res["invalid"]:
+            invalid_props = ", ".join(res["invalid"])
+            raise ValueError(f"Invalid properties found in ontology: {invalid_props}")
+
+        if return_valid_data:
+            resd = data.copy()
+            for inv in res["invalid"]:
+                resd.pop(inv, None)
+            return resd
+
+        return res
 
     def _reversed_fields(self):
         """Get fields that are reversed in type hierarchy."""

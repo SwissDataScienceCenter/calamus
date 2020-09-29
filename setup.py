@@ -21,7 +21,7 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name="calamus",
-    version="0.3.2",
+    version="0.3.4",
     description="calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD.",
     python_requires="==3.*,>=3.6.1",
     project_urls={
@@ -46,7 +46,12 @@ setup(
     packages=["calamus"],
     package_dir={"": "."},
     package_data={},
-    install_requires=["lazy-object-proxy==1.*,>=1.4.3", "marshmallow==3.*,>=3.5.1", "pyld==2.*,>=2.0.2"],
+    install_requires=[
+        "lazy-object-proxy==1.*,>=1.4.3",
+        "marshmallow==3.*,>=3.5.1",
+        "pyld==2.*,>=2.0.2",
+        "rdflib==4.2.2",
+    ],
     extras_require={
         "dev": [
             "black==19.*,>=19.10.0.b0",
