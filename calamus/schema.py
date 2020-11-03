@@ -466,9 +466,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         for _, parameter in const_args.parameters.items():
             if parameter.kind in [inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.POSITIONAL_ONLY]:
                 if parameter.name not in keys:
-                    raise ValueError("Field {} not found in data {}".format(parameter.name, data))
-                args.append(data[parameter.name])
-                keys.remove(parameter.name)
+                    if parameter.default is inspect.Parameter.empty:
+                        raise ValueError("Field {} not found in data {}".format(parameter.name, data))
+                else:
+                    args.append(data[parameter.name])
+                    keys.remove(parameter.name)
             elif parameter.kind is inspect.Parameter.KEYWORD_ONLY:
                 if parameter.name in keys:
                     kwargs[parameter.name] = data[parameter.name]
