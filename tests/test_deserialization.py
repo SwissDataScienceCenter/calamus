@@ -25,9 +25,10 @@ from calamus.schema import JsonLDSchema, blank_node_id_strategy
 
 def test_simple_deserialization():
     class Book:
-        def __init__(self, _id, name, *args, test="Bla", **kwargs):
+        def __init__(self, _id, name, year=2020, **kwargs):
             self._id = _id
             self.name = name
+            self.year = year
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
@@ -54,6 +55,33 @@ def test_simple_deserialization():
     assert book._id == "http://example.com/books/1"
     assert book.name == "Hitchhikers Guide to the Galaxy"
     assert book.isbn == "0-330-25864-8"
+    assert book.year == 2020
+
+
+def test_deserialization_error_with_missing_data():
+    class Book:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.Book
+            model = Book
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": "http://schema.org/Book",
+    }
+
+    with pytest.raises(ValueError) as e:
+        BookSchema().load(data)
+        assert "Field name not found in data" in str(e)
 
 
 def test_simple_deserialization_with_value_type():
@@ -159,7 +187,7 @@ def test_nested_reverse_deserialization(data):
 
 
 def test_nested_flattened_deserialization():
-    """Test deserialisation of flattened jsonld."""
+    """Test deserialization of flattened jsonld."""
 
     class Book:
         def __init__(self, _id, name, author):
@@ -217,7 +245,7 @@ def test_nested_flattened_deserialization():
 
 
 def test_multiple_nested_reverse_flattened_deserialization():
-    """Test deserialisation of flattened jsonld."""
+    """Test deserialization of flattened jsonld."""
 
     class Book:
         def __init__(self, _id, name):
