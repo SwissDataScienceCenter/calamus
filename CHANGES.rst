@@ -18,6 +18,27 @@
 Changes
 =======
 
+`0.3.5 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.4...v0.3.5>`__ (2020-12-10)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Annotation support
+  (`PR #17 <https://github.com/SwissDataScienceCenter/calamus/pull/17>`__)
+
+- Added additional DateTime fields
+  (`PR #41 <https://github.com/SwissDataScienceCenter/calamus/pull/41>`__)
+
+- Added ontology verification to schema and namespace
+  (`PR #42 <https://github.com/SwissDataScienceCenter/calamus/pull/42>`__)
+
+Fixes
+~~~~~
+
+- Fixed an issue with instantiating classes that have parameters with default value in their constructor.
+  (`PR #51 <https://github.com/SwissDataScienceCenter/calamus/pull/51>`__)
+
 `0.3.4 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.3...v0.3.4>`__ (2020-09-22)
 --------------------------------------------------------------------------------------------------
 
