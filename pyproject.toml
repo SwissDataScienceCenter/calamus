@@ -18,7 +18,7 @@
 
 [tool.poetry]
 name = "calamus"
-version = "0.3.5"
+version = "0.3.6"
 description = "calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD."
 authors = ["Swiss Data Science Center <contact@datascience.ch>"]
 license = "Apache-2.0"

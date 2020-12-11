@@ -18,6 +18,16 @@
 Changes
 =======
 
+`0.3.6 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.5...v0.3.6>`__ (2020-12-11)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fixed an issue when constructing classes with default parameters that are not positional-only.
+  (`PR #53 <https://github.com/SwissDataScienceCenter/calamus/pull/53>`__)
+
+
 `0.3.5 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.4...v0.3.5>`__ (2020-12-10)
 --------------------------------------------------------------------------------------------------
 
