@@ -25,10 +25,10 @@ from calamus.schema import JsonLDSchema, blank_node_id_strategy
 
 def test_simple_deserialization():
     class Book:
-        def __init__(self, _id, name, year=2020, **kwargs):
+        def __init__(self, _id, name="Hitchhikers Guide to the Galaxy", copyright_year=1979, **kwargs):
             self._id = _id
             self.name = name
-            self.year = year
+            self.copyright_year = copyright_year
             for k, v in kwargs.items():
                 setattr(self, k, v)
 
@@ -38,6 +38,7 @@ def test_simple_deserialization():
         _id = fields.Id()
         name = fields.String(schema.name)
         isbn = fields.String(schema.isbn)
+        copyright_year = fields.Integer(schema.copyrightYear)
 
         class Meta:
             rdf_type = schema.Book
@@ -46,8 +47,8 @@ def test_simple_deserialization():
     data = {
         "@id": "http://example.com/books/1",
         "@type": "http://schema.org/Book",
-        "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
         "http://schema.org/isbn": "0-330-25864-8",
+        "http://schema.org/copyrightYear": 1979,
     }
 
     book = BookSchema().load(data)
@@ -55,7 +56,7 @@ def test_simple_deserialization():
     assert book._id == "http://example.com/books/1"
     assert book.name == "Hitchhikers Guide to the Galaxy"
     assert book.isbn == "0-330-25864-8"
-    assert book.year == 2020
+    assert book.copyright_year == 1979
 
 
 def test_deserialization_error_with_missing_data():
