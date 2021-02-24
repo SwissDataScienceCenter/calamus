@@ -46,7 +46,7 @@ sphinx = {version = "^3.0.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 sphinxcontrib-spelling = {version = "^5.0.0", optional = true}
 lazy-object-proxy = "^1.4.3"
-rdflib = "4.2.2"
+rdflib = {extras = ["sparql"], version = "^5.0.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
