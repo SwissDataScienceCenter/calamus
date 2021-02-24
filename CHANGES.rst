@@ -18,6 +18,15 @@
 Changes
 =======
 
+`0.3.7 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.6...v0.3.7>`__ (2021-02-24)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Upgraded RDFLib to version 5.0.0.
+  (`PR #56 <https://github.com/SwissDataScienceCenter/calamus/pull/56>`__)
+
 `0.3.6 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.5...v0.3.6>`__ (2020-12-11)
 --------------------------------------------------------------------------------------------------
 
@@ -26,7 +35,6 @@ Fixes
 
 - Fixed an issue when constructing classes with default parameters that are not positional-only.
   (`PR #53 <https://github.com/SwissDataScienceCenter/calamus/pull/53>`__)
-
 
 `0.3.5 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.4...v0.3.5>`__ (2020-12-10)
 --------------------------------------------------------------------------------------------------
