@@ -17,6 +17,7 @@
 # limitations under the License.
 """Neo4J connection utils."""
 import json
+import time
 
 try:
     import requests
@@ -88,18 +89,22 @@ class CalamusNeo4JBackend(CalamusDbBackend):
             raise RuntimeError("The graph must first be initialized.")
 
         cypher = f"""
-        MATCH path=((n {{uri: "{identifier}"}}) -[*0..1]-> ()) RETURN path
+        MATCH path=((n:Resource {{uri: "{identifier}"}}) -[*0..1]-> ()) RETURN path
         """
 
         payload = {"cypher": cypher, "format": "JSON-LD"}
 
-        data = requests.post(
+        print(cypher)
+        timein = time.time()
+        res = requests.post(
             f"{self.http_url}/rdf/neo4j/cypher", data=json.dumps(payload), auth=tuple(self.auth.values())
-        ).json()
+        )
+        print(f"time: {time.time()-timein}")
+        data = res.json()
 
-        # grab just the data we asked for - depending on the node, we might have a @graph or just
-        # data for the single node
-        if data and "@graph" in data:
-            data = [x for x in data.get("@graph") if x.get("@id") == identifier].pop()
-
+        if data is not None:
+            data = data.get("@graph", data)
         return data
+
+    def query(self, data, schema):
+        """Construct a query based on the data and the schema."""

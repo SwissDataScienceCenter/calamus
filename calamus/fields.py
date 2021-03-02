@@ -37,7 +37,7 @@ logger = logging.getLogger("calamus")
 
 @total_ordering
 class IRIReference(object):
-    """ Represent an IRI in a namespace.
+    """Represent an IRI in a namespace.
 
     Args:
         namespace (Namespace): The ``Namespace`` this IRI is part of.
@@ -451,10 +451,15 @@ class Nested(_JsonLDField, fields.Nested):
     def _dereference_single_id(self, value, attr, **kwargs):
         """Dereference a single id."""
         session = kwargs.get("session")
-        if session:
-            data = session.fetch_by_id(value)
-        else:
+
+        data = None
+
+        if kwargs["_all_objects"] is not None:
             data = kwargs["_all_objects"].get(value, None)
+
+        if not data and session:
+            data = session.fetch_by_id(value)
+
         if not data:
             raise ValueError("Couldn't dereference id {id}".format(id=value))
 
