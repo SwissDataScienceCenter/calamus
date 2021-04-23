@@ -342,6 +342,54 @@ class Raw(_JsonLDField, fields.Raw):
     pass
 
 
+class RawJsonLD(_JsonLDField, fields.Raw):
+    """A raw JSON-LD field."""
+
+    def _dereference_single_id(self, value, attr, **kwargs):
+        """Dereference a single id."""
+        data = kwargs["_all_objects"].get(value, None)
+        if not data:
+            raise ValueError("Couldn't dereference id {id}".format(id=value))
+
+        try:
+            data = dict(data)
+        except (TypeError, ValueError):
+            raise ValueError(f"Couldn't convert value '{data}' to dictionary.")
+
+        if self.reverse:
+            # we need to remove the property from the child when handling reverse nesting
+            del data[attr]
+
+        return data
+
+    def _dereference_flattened(self, value, attr, **kwargs):
+        """Dereference an id or a list of ids."""
+        if isinstance(value, list) or isinstance(value, types.GeneratorType):
+            return [self._dereference_flattened(i, attr, **kwargs) for i in value]
+        if isinstance(value, str):
+            return self._dereference_single_id(value, attr, **kwargs)
+        elif isinstance(value, dict):
+            if len(value.keys()) == 1 and "@id" in value:
+                value = self._dereference_single_id(value["@id"], attr, **kwargs)
+                for k, v in value.items():
+                    if not k.startswith("@"):
+                        value[k] = self._dereference_flattened(v, attr, **kwargs)
+                return value
+            else:
+                return value
+        else:
+            raise ValueError("Nested field needs to be a dict or an id entry/list, got {value}".format(value=value))
+
+    def _deserialize(self, value, attr, data, **kwargs):
+        """Deserialize object."""
+
+        if kwargs.get("flattened", False):
+            # could be id references, dereference them to continue deserialization
+            value = self._dereference_flattened(value, attr, **kwargs)
+
+        return super()._deserialize(value, attr, data, **kwargs)
+
+
 class Nested(_JsonLDField, fields.Nested):
     """A reference to one or more nested classes."""
 

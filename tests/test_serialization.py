@@ -629,3 +629,74 @@ def test_date_time_serialization():
 
     assert "http://schema.org/time" in jsonld
     assert jsonld["http://schema.org/time"] == "12:10:30"
+
+
+def test_rawjsonld_deserialization():
+    """Tests deserialization of raw JSON-LD field."""
+
+    class A(object):
+        def __init__(self, _id, simple, nested):
+            super().__init__()
+            self._id = _id
+            self.simple = simple
+            self.nested = nested
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class ASchema(JsonLDSchema):
+        _id = fields.Id()
+        simple = fields.RawJsonLD("http://www.w3.org/ns/oa#hasBody")
+        nested = fields.RawJsonLD("http://www.w3.org/ns/oa#hasBody2")
+
+        class Meta:
+            rdf_type = schema.A
+            model = A
+
+    raw_field = {
+        "@id": "example_run123",
+        "@type": "http://www.w3.org/ns/mls#Run",
+        "http://www.w3.org/ns/mls#implements": {
+            "http://www.w3.org/2000/01/rdf-schema#label": "sklearn.ensemble._forest.RandomForestClassifier",
+            "@id": "sklearn.ensemble._forest.RandomForestClassifier",
+            "@type": ["http://www.w3.org/ns/mls#Algorithm"],
+        },
+    }
+    is_partof_raw_field = [
+        {
+            "@id": "id1",
+            "@type": "http://www.w3.org/ns/mls#Run",
+            "http://schema.org/isPartOf": {
+                "@id": "id2",
+                "@type": "http://www.w3.org/ns/mls#Algorithm",
+                "http://www.w3.org/2000/01/rdf-schema#label": "sklearn.ensemble._forest.RandomForestClassifier",
+            },
+        }
+    ]
+
+    data = {
+        "@type": ["https://schema.org/A"],
+        "@id": "_:dummyid",
+        "http://www.w3.org/ns/oa#hasBody": raw_field,
+        "http://www.w3.org/ns/oa#hasBody2": is_partof_raw_field,
+    }
+
+    a = ASchema().load(data)
+    assert a.simple["@id"] == "example_run123"
+    assert "http://www.w3.org/ns/mls#implements" in a.simple
+    assert a.simple["http://www.w3.org/ns/mls#implements"]["@id"] == "sklearn.ensemble._forest.RandomForestClassifier"
+
+    # test loading raw JSON-LD field that was flattened
+    jsonld = ASchema(flattened=True).dump(a)
+
+    a = ASchema(flattened=True).load(jsonld)
+    assert a.simple["@id"] == "example_run123"
+    assert "http://www.w3.org/ns/mls#implements" in a.simple
+    assert (
+        a.simple["http://www.w3.org/ns/mls#implements"][0]["@id"] == "sklearn.ensemble._forest.RandomForestClassifier"
+    )
+    assert a.nested["@id"] == "id1"
+    assert a.nested["http://schema.org/isPartOf"][0]["@id"] == "id2"
+    assert (
+        a.nested["http://schema.org/isPartOf"][0]["http://www.w3.org/2000/01/rdf-schema#label"][0]["@value"]
+        == "sklearn.ensemble._forest.RandomForestClassifier"
+    )
