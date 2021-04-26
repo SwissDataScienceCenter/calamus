@@ -18,6 +18,15 @@
 Changes
 =======
 
+`0.3.8 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.7...v0.3.8>`__ (2021-04-26)
+--------------------------------------------------------------------------------------------------
+
+Features
+~~~~~~~~
+
+- Added a new field type RawJsonLD, that properly handles deserialization of raw field containing JSON-LD.
+  (`PR #58 <https://github.com/SwissDataScienceCenter/calamus/pull/58>`__)
+
 `0.3.7 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.6...v0.3.7>`__ (2021-02-24)
 --------------------------------------------------------------------------------------------------
 
