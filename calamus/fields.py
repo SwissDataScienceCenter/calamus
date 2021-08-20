@@ -198,7 +198,8 @@ class IRI(String):
 
     def _serialize(self, value, attr, obj, **kwargs):
         value = super()._serialize(value, attr, obj, **kwargs)
-        return {"@id": value}
+        if value:
+            return {"@id": value}
 
     def _deserialize(self, value, attr, data, **kwargs):
         if "@id" in value:
