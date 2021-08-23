@@ -18,6 +18,15 @@
 Changes
 =======
 
+`0.3.9 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.8...v0.3.9>`__ (2021-08-23)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~~~~
+
+- Fixes empty ``IRI`` serialization and ``@reverse`` serialization of ``IRI``.
+  (`PR #61 <https://github.com/SwissDataScienceCenter/calamus/pull/61>`__)
+
 `0.3.8 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.7...v0.3.8>`__ (2021-04-26)
 --------------------------------------------------------------------------------------------------
 
