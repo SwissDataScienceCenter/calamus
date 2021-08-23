@@ -397,6 +397,13 @@ def test_iri_field_serialization():
     assert "@id" in jsonld["http://schema.org/url"]
     assert jsonld["http://schema.org/url"]["@id"] == "http://datascience.ch"
 
+    b = A("http://example.com/2", None)
+
+    jsonld = ASchema().dump(b)
+
+    assert "http://schema.org/url" in jsonld
+    assert jsonld["http://schema.org/url"] == None
+
 
 def test_lazy_proxy_serialization():
     """Tests that lazy deserialization works."""

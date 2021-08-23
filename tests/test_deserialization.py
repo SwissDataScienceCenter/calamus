@@ -328,7 +328,7 @@ def test_iri_field_deserialization():
 
     class ASchema(JsonLDSchema):
         _id = fields.Id()
-        url = fields.IRI(schema.url)
+        url = fields.IRI(schema.url, allow_none=True)
 
         class Meta:
             rdf_type = schema.A
@@ -343,6 +343,16 @@ def test_iri_field_deserialization():
     a = ASchema().load(data)
 
     assert a.url == "http://datascience.ch"
+
+    data = {
+        "@id": "http://example.com/1",
+        "@type": ["http://schema.org/A"],
+        "http://schema.org/url": None,
+    }
+
+    a = ASchema().load(data)
+
+    assert a.url == None
 
 
 @pytest.mark.parametrize("value", [["1"], ["1", "2"]])

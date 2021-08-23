@@ -252,7 +252,7 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             for d in data:
                 self._all_objects[d["@id"]] = d
 
-                if self._compare_ids(d["@type"], self.opts.rdf_type):
+                if "@type" in d and self._compare_ids(d["@type"], self.opts.rdf_type):
                     new_data.append(d)
 
             data = new_data
