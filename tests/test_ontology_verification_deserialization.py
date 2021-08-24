@@ -23,7 +23,7 @@ from calamus.schema import JsonLDSchema
 
 
 def test_simple_verification_deserialization():
-    """ Shouldn't raise any error while deserializing """
+    """Shouldn't raise any error while deserializing"""
 
     class Book:
         def __init__(self, _id, name, author):
