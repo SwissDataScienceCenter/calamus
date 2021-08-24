@@ -187,6 +187,81 @@ def test_nested_reverse_deserialization(data):
     assert author.books[0].name == "Hitchhikers Guide to the Galaxy"
 
 
+def test_missing_reverse_nested_deserialization():
+    class Book:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+    class Author:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+            self.books = []
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class BookSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        class Meta:
+            rdf_type = schema.Book
+            model = Book
+
+    class AuthorSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        books = fields.Nested(schema.author, BookSchema, reverse=True, many=True)
+
+        class Meta:
+            rdf_type = schema.Person
+            model = Author
+
+    data = {
+        "@id": "http://example.com/authors/2",
+        "@type": "http://schema.org/Person",
+        "http://schema.org/name": "Douglas Adams",
+    }
+
+    author = AuthorSchema().load(data)
+
+    assert author.name == "Douglas Adams"
+    assert author._id == "http://example.com/authors/2"
+    assert len(author.books) == 0
+
+
+def test_missing_reverse_simple_deserialization():
+    class Author:
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+            self.organization = None
+
+    schema = fields.Namespace("http://schema.org/")
+
+    class AuthorSchema(JsonLDSchema):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+        organization = fields.IRI(schema.organization, reverse=True)
+
+        class Meta:
+            rdf_type = schema.Person
+            model = Author
+
+    data = {
+        "@id": "http://example.com/authors/2",
+        "@type": "http://schema.org/Person",
+        "http://schema.org/name": "Douglas Adams",
+    }
+
+    author = AuthorSchema().load(data)
+
+    assert author.name == "Douglas Adams"
+    assert author._id == "http://example.com/authors/2"
+    assert author.organization == None
+
+
 def test_nested_flattened_deserialization():
     """Test deserialization of flattened jsonld."""
 

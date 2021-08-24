@@ -215,6 +215,9 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
         """
         ret = []
 
+        if not self._all_objects:
+            return ret
+
         for d in self._all_objects.values():
             if field_name not in d:
                 continue
@@ -234,7 +237,10 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
 
     def _deserialize(
         self,
-        data: typing.Union[typing.Mapping[str, typing.Any], typing.Iterable[typing.Mapping[str, typing.Any]],],
+        data: typing.Union[
+            typing.Mapping[str, typing.Any],
+            typing.Iterable[typing.Mapping[str, typing.Any]],
+        ],
         *args,
         error_store: ErrorStore,
         many: bool = False,
@@ -329,7 +335,11 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                 d_kwargs["lazy"] = self.lazy
                 getter = lambda val: field_obj.deserialize(val, field_name, data, **d_kwargs)
                 value = self._call_and_store(
-                    getter_func=getter, data=raw_value, field_name=field_name, error_store=error_store, index=index,
+                    getter_func=getter,
+                    data=raw_value,
+                    field_name=field_name,
+                    error_store=error_store,
+                    index=index,
                 )
                 if value is not missing:
                     key = field_obj.attribute or attr_name
@@ -358,7 +368,9 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
                         set_value(typing.cast(typing.Dict, ret), key, value)
                     elif unknown == RAISE:
                         error_store.store_error(
-                            [self.error_messages["unknown"]], key, (index if index_errors else None),
+                            [self.error_messages["unknown"]],
+                            key,
+                            (index if index_errors else None),
                         )
 
         self._init_names_mapping = {

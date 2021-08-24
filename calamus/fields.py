@@ -39,7 +39,7 @@ logger = logging.getLogger("calamus")
 
 @total_ordering
 class IRIReference(object):
-    """ Represent an IRI in a namespace.
+    """Represent an IRI in a namespace.
 
     Args:
         namespace (Namespace): The ``Namespace`` this IRI is part of.

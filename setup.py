@@ -54,7 +54,7 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black==19.*,>=19.10.0.b0",
+            "black==21.*,>=21.7b0",
             "flake8==3.*,>=3.7.9",
             "pre-commit==2.*,>=2.3.0",
             "pytest==5.*,>=5.2.0",

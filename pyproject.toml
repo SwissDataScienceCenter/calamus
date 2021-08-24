@@ -39,7 +39,7 @@ classifiers = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.6.1"
+python = "^3.6.2"
 marshmallow = "^3.5.1"
 pyld = "^2.0.2"
 sphinx = {version = "^3.0.3", optional = true}
@@ -50,7 +50,7 @@ rdflib = {extras = ["sparql"], version = "^5.0.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
-black = "^19.10b0"
+black = "^21.7b0"
 pre-commit = "^2.3.0"
 flake8 = "^3.7.9"
 pytest-black = "^0.3.9"
