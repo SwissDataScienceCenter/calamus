@@ -18,6 +18,15 @@
 Changes
 =======
 
+`0.3.10 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.9...v0.3.10>`__ (2021-08-24)
+----------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~~~~
+
+- Fix deserialization of @reverse fields with no data
+  (`PR #63 <https://github.com/SwissDataScienceCenter/calamus/pull/63>`__)
+
 `0.3.9 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.8...v0.3.9>`__ (2021-08-23)
 --------------------------------------------------------------------------------------------------
 
