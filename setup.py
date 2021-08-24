@@ -23,7 +23,7 @@ setup(
     name="calamus",
     version="0.3.9",
     description="calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD.",
-    python_requires="==3.*,>=3.6.1",
+    python_requires="==3.*,>=3.6.2",
     project_urls={
         "homepage": "https://github.com/SwissDataScienceCenter/calamus/",
         "repository": "https://github.com/SwissDataScienceCenter/calamus/",
@@ -54,7 +54,7 @@ setup(
     ],
     extras_require={
         "dev": [
-            "black==19.*,>=19.10.0.b0",
+            "black==21.*,>=21.7.0.b0",
             "flake8==3.*,>=3.7.9",
             "pre-commit==2.*,>=2.3.0",
             "pytest==5.*,>=5.2.0",

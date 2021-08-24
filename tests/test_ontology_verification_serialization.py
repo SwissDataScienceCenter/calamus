@@ -23,7 +23,7 @@ from calamus.schema import JsonLDSchema
 
 
 def test_simple_verification_serialization():
-    """ The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned """
+    """The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned"""
 
     class Book:
         def __init__(self, _id, name, author, publishedYear):
@@ -73,7 +73,7 @@ def test_simple_verification_serialization():
 
 
 def test_namespace_verification():
-    """ The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned """
+    """The ontology doesn't contain the property of publishedYear so it shoudn't be included in the jsonld returned"""
 
     schema = fields.Namespace("http://schema.org/", ontology="tests/fixtures/book_ontology.owl")
 
