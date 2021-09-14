@@ -18,11 +18,19 @@
 Changes
 =======
 
+`0.3.11 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.10...v0.3.11>`__ (2021-09-14)
+-----------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Update rdflib to 6.0.0 to fix compatibility issues with rdflib-jsonld
+
 `0.3.10 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.9...v0.3.10>`__ (2021-08-24)
 ----------------------------------------------------------------------------------------------------
 
 Fixes
-~~~~~~~~
+~~~~~
 
 - Fix deserialization of @reverse fields with no data
   (`PR #63 <https://github.com/SwissDataScienceCenter/calamus/pull/63>`__)
@@ -31,7 +39,7 @@ Fixes
 --------------------------------------------------------------------------------------------------
 
 Fixes
-~~~~~~~~
+~~~~~
 
 - Fixes empty ``IRI`` serialization and ``@reverse`` serialization of ``IRI``.
   (`PR #61 <https://github.com/SwissDataScienceCenter/calamus/pull/61>`__)
