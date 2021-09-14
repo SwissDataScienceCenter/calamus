@@ -790,7 +790,7 @@ docs = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.7.1"
-content-hash = "93495faeb2413428cbc99d37ad3b0b1012f26e01d112d3731f9c3b864910b7c4"
+content-hash = "bf2e931eb74997be5002048256948cba07ba5da67ec36f7ab2b7f804d4e507a7"
 
 [metadata.files]
 alabaster = [
