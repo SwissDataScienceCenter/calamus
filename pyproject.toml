@@ -18,7 +18,7 @@
 
 [tool.poetry]
 name = "calamus"
-version = "0.3.11"
+version = "0.3.12"
 description = "calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD."
 authors = ["Swiss Data Science Center <contact@datascience.ch>"]
 license = "Apache-2.0"
@@ -47,7 +47,7 @@ sphinx = {version = "^3.0.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 sphinxcontrib-spelling = {version = "^5.0.0", optional = true}
 lazy-object-proxy = "^1.4.3"
-rdflib = {extras = ["sparql"], version = "^6.0.0"}
+rdflib = {version = "^6.0.0"}
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

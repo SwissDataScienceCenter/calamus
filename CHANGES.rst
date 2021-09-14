@@ -18,6 +18,14 @@
 Changes
 =======
 
+`0.3.12 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.11...v0.3.12>`__ (2021-09-14)
+-----------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Remove SPARQL from rdflib extras to fix source distribution builds
+
 `0.3.11 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.10...v0.3.11>`__ (2021-09-14)
 -----------------------------------------------------------------------------------------------------
 
