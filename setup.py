@@ -51,7 +51,7 @@ setup(
         "lazy-object-proxy==1.*,>=1.4.3",
         "marshmallow==3.*,>=3.5.1",
         "pyld==2.*,>=2.0.2",
-        "rdflib[sparql]==6.*,>=6.0.0",
+        "rdflib==6.*,>=6.0.0",
     ],
     extras_require={
         "dev": [
