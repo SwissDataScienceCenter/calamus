@@ -17,22 +17,19 @@
 # limitations under the License.
 """Marshmallow fields for use with JSON-LD."""
 
+import copy
+import logging
+import types
+import typing
 from functools import total_ordering
 
 import marshmallow.fields as fields
-from marshmallow.base import SchemaABC
 from marshmallow import class_registry, utils
+from marshmallow.base import SchemaABC
 from marshmallow.exceptions import ValidationError
-import logging
-import copy
-
-import rdflib
-
-import typing
-import types
 
 from calamus.schema import JsonLDSchema
-from calamus.utils import normalize_type, normalize_value, ONTOLOGY_QUERY, Proxy
+from calamus.utils import ONTOLOGY_QUERY, Proxy, normalize_type, normalize_value
 
 logger = logging.getLogger("calamus")
 
@@ -87,14 +84,18 @@ class Namespace(object):
         self.ontology = None
 
         if ontology:
-            g = rdflib.Graph()
+            from rdflib.graph import Graph
+
+            g = Graph()
             self.ontology = g.parse(ontology)
 
     def __getattr__(self, name):
         reference = IRIReference(self, name)
 
         if self.ontology:
-            p = rdflib.URIRef(str(reference))
+            from rdflib.term import URIRef
+
+            p = URIRef(str(reference))
             qres = self.ontology.query(ONTOLOGY_QUERY, initBindings={"property": p})
             if not next(iter(qres), False):
                 raise ValueError(f"Property {name} does not exist in namespace {self.namespace}")

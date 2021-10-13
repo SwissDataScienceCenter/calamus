@@ -19,11 +19,10 @@
 
 import types
 import typing
-from lazy_object_proxy.slots import Proxy as LazyProxy, _ProxyMetaType
-from lazy_object_proxy.compat import with_metaclass
-import rdflib
-from rdflib.plugins.sparql import prepareQuery
 
+from lazy_object_proxy.compat import with_metaclass
+from lazy_object_proxy.slots import Proxy as LazyProxy
+from lazy_object_proxy.slots import _ProxyMetaType
 
 JSON_LD_SYNTAX_TOKENS = [
     "@id",
@@ -51,10 +50,18 @@ JSON_LD_SYNTAX_TOKENS = [
     "@vocab",
 ]
 
-ONTOLOGY_QUERY = prepareQuery(
-    "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type "
-    "<http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
-)
+
+def _get_ontology_query():
+    """prepareQuery is rather slow, so we wrap it in a lazy proxy to only execute when needed."""
+    from rdflib.plugins.sparql import prepareQuery
+
+    return prepareQuery(
+        "ask { { ?property rdf:type <http://www.w3.org/2002/07/owl#DatatypeProperty> .} UNION { ?property rdf:type "
+        "<http://www.w3.org/2002/07/owl#ObjectProperty> .} }"
+    )
+
+
+ONTOLOGY_QUERY = LazyProxy(_get_ontology_query)
 
 
 def normalize_id(
@@ -108,6 +115,8 @@ def validate_field_properties(data, ontology, query=None, mem={"valid": set(), "
     Returns:
         dict: Key ``valid`` has all valid properties (excluding @id and @type), ``invalid`` has all invalid properties
     """
+    from rdflib.graph import Graph
+    from rdflib.term import URIRef
 
     res = {"valid": set(), "invalid": set()}
 
@@ -117,7 +126,7 @@ def validate_field_properties(data, ontology, query=None, mem={"valid": set(), "
     if not isinstance(data, dict):
         raise ValueError("`data` must be a dict.")
 
-    if not isinstance(ontology, rdflib.Graph):
+    if not isinstance(ontology, Graph):
         raise ValueError("`graph` must be an `rdflib.Graph`")
 
     for prop in data.keys():
@@ -130,7 +139,7 @@ def validate_field_properties(data, ontology, query=None, mem={"valid": set(), "
 
         # after checking memoization
         if prop not in JSON_LD_SYNTAX_TOKENS:
-            p = rdflib.URIRef(prop)
+            p = URIRef(prop)
             qres = ontology.query(query, initBindings={"property": p})
             if next(iter(qres), False):
                 res["valid"].add(prop)
