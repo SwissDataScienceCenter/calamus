@@ -18,6 +18,14 @@
 Changes
 =======
 
+`0.3.13 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.12...v0.3.13>`__ (2021-10-13)
+-----------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fix imports to reduce import time of library
+
 `0.3.12 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.11...v0.3.12>`__ (2021-09-14)
 -----------------------------------------------------------------------------------------------------
 
