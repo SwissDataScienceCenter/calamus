@@ -17,21 +17,19 @@
 # limitations under the License.
 """Marshmallow schema implementation that supports JSON-LD."""
 
-from marshmallow.schema import Schema, SchemaMeta, SchemaOpts
-from marshmallow.utils import missing, is_collection, RAISE, set_value, EXCLUDE, INCLUDE
-from marshmallow import post_load
-from collections.abc import Mapping
-from marshmallow.error_store import ErrorStore
-from rdflib.plugins.sparql import prepareQuery
-from uuid import uuid4
-import rdflib
-from pyld import jsonld
-
 import inspect
 import typing
+from collections.abc import Mapping
 from functools import lru_cache
+from uuid import uuid4
 
-from calamus.utils import normalize_id, normalize_type, Proxy, validate_field_properties
+from marshmallow import post_load
+from marshmallow.error_store import ErrorStore
+from marshmallow.schema import Schema, SchemaMeta, SchemaOpts
+from marshmallow.utils import EXCLUDE, INCLUDE, RAISE, is_collection, missing, set_value
+from pyld import jsonld
+
+from calamus.utils import Proxy, normalize_id, normalize_type, validate_field_properties
 
 _T = typing.TypeVar("_T")
 
@@ -388,11 +386,13 @@ class JsonLDSchema(Schema, metaclass=JsonLDSchemaMeta):
             return_valid_data (bool): Whether to delete invalid properties to return only valid data or else
                 returns a dict containing valid and invalid properties, Default: ``False``
         """
+        from rdflib.graph import Graph
+        from rdflib.plugins.sparql import prepareQuery
 
         if isinstance(data, self.Meta.model) or all(isinstance(s, self.Meta.model) for s in data):
             data = self.dump(data)
 
-        g = rdflib.Graph()
+        g = Graph()
         if not isinstance(ontology, list):
             ontology = [ontology]
 
