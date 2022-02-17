@@ -550,17 +550,16 @@ class JsonLDAnnotation(type):
     def __new__(mcs, name, bases, namespace, **kwargs):
         import calamus.fields as fields
 
-        base_schema = None
+        base_schemas = (JsonLDSchema,)
 
         if bases:
-            base_schema = next(
-                (
-                    base.__calamus_schema__
-                    for base in bases
-                    if hasattr(base, "__calamus_schema__") and issubclass(base.__calamus_schema__, JsonLDSchema)
-                ),
-                None,
-            )
+            potential_base_schemas = [
+                base.__calamus_schema__
+                for base in bases
+                if hasattr(base, "__calamus_schema__") and issubclass(base.__calamus_schema__, JsonLDSchema)
+            ]
+            if potential_base_schemas:
+                base_schemas = tuple(potential_base_schemas)
 
         attribute_dict = {}
         for attr_name, value in namespace.copy().items():
@@ -579,7 +578,7 @@ class JsonLDAnnotation(type):
             raise ValueError("Setting 'rdf_type' on the `class Meta` is required for calamus annotations")
 
         attribute_dict["Meta"] = type("Meta", (), {"rdf_type": namespace["Meta"].rdf_type})
-        namespace["__calamus_schema__"] = type(f"{name}Schema", (base_schema or JsonLDSchema,), attribute_dict)
+        namespace["__calamus_schema__"] = type(f"{name}Schema", base_schemas, attribute_dict)
 
         @lru_cache(maxsize=5)
         def schema(*args, **kwargs):

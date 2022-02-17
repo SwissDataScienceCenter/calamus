@@ -168,3 +168,61 @@ def test_annotation_inheritance():
 
     dumped = book.dump()
     assert data == dumped
+
+
+def test_annotation_multiple_inheritance():
+    """Test that inheritance works for annotated classes."""
+    schema = fields.Namespace("http://schema.org/")
+
+    class Book(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+        class Meta:
+            rdf_type = schema.Book
+
+    class EducationMaterial(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        grade = fields.String(schema.grade)
+
+        def __init__(self, _id, grade):
+            self._id = _id
+            self.grade = grade
+
+        class Meta:
+            rdf_type = schema.EducationMaterial
+
+    class Schoolbook(Book, EducationMaterial):
+        course = fields.String(schema.course)
+
+        def __init__(self, _id, name, course):
+            self.course = course
+            super().__init__(_id, name)
+
+        class Meta:
+            rdf_type = schema.SchoolBook
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": ["http://schema.org/Book", "http://schema.org/EducationMaterial", "http://schema.org/SchoolBook"],
+        "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
+        "http://schema.org/course": "Literature",
+        "http://schema.org/grade": "Primary",
+    }
+
+    book = Schoolbook.schema().load(data)
+
+    assert book._id == "http://example.com/books/1"
+    assert book.name == "Hitchhikers Guide to the Galaxy"
+    assert book.course == "Literature"
+    assert book.grade == "Primary"
+
+    dumped = Schoolbook.schema().dump(book)
+    assert data == dumped
+
+    dumped = book.dump()
+    assert data == dumped
