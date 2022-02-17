@@ -216,7 +216,7 @@ can be done by setting the ``metaclass`` of the model to ``JsonLDAnnotation``.
 
     import datetime.datetime as dt
 
-    from calamus import JsonLDAnnotation
+    from calamus.schema import JsonLDAnnotation
     import calamus.fields as fields
 
     schema = fields.Namespace("http://schema.org/")
