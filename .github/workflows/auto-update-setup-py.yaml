@@ -13,7 +13,7 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.head_ref }}
-        token: ${{ secrets.RENKU_CI_TOKEN }}
+        token: ${{ secrets.RENKUBOT_GITHUB_TOKEN }}
     - name: Setup python
       uses: actions/setup-python@v1
       with:
@@ -21,7 +21,7 @@ jobs:
     - name: Update/generate setup.py
       run: |
         python -m pip install --upgrade pip
-        pip install dephell[full]
+        pip install dephell[full] mistune==0.8.4
         dephell deps convert --from pyproject.toml --to setup.py
     - name: Fix setup.py format
       run: |

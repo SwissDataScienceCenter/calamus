@@ -18,6 +18,14 @@
 Changes
 =======
 
+`0.3.14 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.13...v0.3.14>`__ (2022-03-23)
+-----------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~
+
+- Fix schema inheritance not following class inheritance when using JsonLDAnnotation.
+
 `0.3.13 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.12...v0.3.13>`__ (2021-10-13)
 -----------------------------------------------------------------------------------------------------
 
