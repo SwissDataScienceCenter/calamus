@@ -58,6 +58,38 @@ def test_annotation():
     assert data == dumped
 
 
+def test_annotation_meta_option():
+    """Test annotation support with marshmallow meta option."""
+    schema = fields.Namespace("http://schema.org/")
+
+    class Book(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        def __init__(self, _id, name=""):
+            self._id = _id
+            self.name = name
+
+        class Meta:
+            rdf_type = schema.Book
+            exclude = ("name",)
+
+    data = {"@id": "http://example.com/books/1", "@type": ["http://schema.org/Book"]}
+
+    book = Book.schema().load(data)
+
+    assert book._id == "http://example.com/books/1"
+    assert book.name == ""
+
+    dumped = Book.schema().dump(book)
+    assert data == dumped
+    assert "http://schema.org/name" not in data
+
+    dumped = book.dump()
+    assert data == dumped
+    assert "http://schema.org/name" not in data
+
+
 def test_annotation_with_default():
     """Test annotation with default values."""
     schema = fields.Namespace("http://schema.org/")
@@ -168,6 +200,111 @@ def test_annotation_inheritance():
     assert book.course == "Literature"
 
     dumped = Schoolbook.schema().dump(book)
+    assert data == dumped
+
+    dumped = book.dump()
+    assert data == dumped
+
+
+def test_annotation_without_inheritance():
+    """Test that inheritance works for annotated classes with type inheritance disabled."""
+    schema = fields.Namespace("http://schema.org/")
+
+    class Book(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+        class Meta:
+            rdf_type = schema.Book
+
+    class Schoolbook(Book):
+        course = fields.String(schema.course)
+
+        def __init__(self, _id, name, course):
+            self.course = course
+            super().__init__(_id, name)
+
+        class Meta(Book.Meta):
+            rdf_type = schema.SchoolBook
+            inherit_parent_types = False
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": ["http://schema.org/SchoolBook"],
+        "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
+        "http://schema.org/course": "Literature",
+    }
+
+    book = Schoolbook.schema().load(data)
+
+    assert book._id == "http://example.com/books/1"
+    assert book.name == "Hitchhikers Guide to the Galaxy"
+    assert book.course == "Literature"
+
+    dumped = Schoolbook.schema().dump(book)
+    assert data == dumped
+
+    dumped = book.dump()
+    assert data == dumped
+
+
+def test_annotation_without_inheritance_multiple():
+    """Test that inheritance works for annotated classes with type inheritance enabled selectively."""
+    schema = fields.Namespace("http://schema.org/")
+
+    class Book(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+        class Meta:
+            rdf_type = schema.Book
+
+    class Schoolbook(Book):
+        course = fields.String(schema.course)
+
+        def __init__(self, _id, name, course):
+            self.course = course
+            super().__init__(_id, name)
+
+        class Meta:
+            rdf_type = schema.SchoolBook
+            inherit_parent_types = False
+
+    class Biologybook(Schoolbook):
+        topic = fields.String(schema.topic)
+
+        def __init__(self, _id, name, course, topic):
+            self.topic = topic
+            super().__init__(_id, name, course)
+
+        class Meta:
+            rdf_type = schema.BiologyBook
+            inherit_parent_types = True
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": ["http://schema.org/BiologyBook", "http://schema.org/SchoolBook"],
+        "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
+        "http://schema.org/course": "Literature",
+        "http://schema.org/topic": "Genetics",
+    }
+
+    book = Biologybook.schema().load(data)
+
+    assert book._id == "http://example.com/books/1"
+    assert book.name == "Hitchhikers Guide to the Galaxy"
+    assert book.course == "Literature"
+    assert book.topic == "Genetics"
+
+    dumped = Biologybook.schema().dump(book)
     assert data == dumped
 
     dumped = book.dump()

@@ -56,6 +56,8 @@ class JsonLDSchemaOpts(SchemaOpts):
         super().__init__(meta, *args, **kwargs)
 
         self.rdf_type = getattr(meta, "rdf_type", None)
+        self.inherit_parent_types = getattr(meta, "inherit_parent_types", True)
+
         if not isinstance(self.rdf_type, list):
             self.rdf_type = [self.rdf_type] if self.rdf_type else []
         self.rdf_type = sorted(self.rdf_type)
@@ -72,12 +74,15 @@ class JsonLDSchemaMeta(SchemaMeta):
     def __new__(mcs, name, bases, attrs):
         klass = super().__new__(mcs, name, bases, attrs)
 
-        # Include rdf_type of all parent schemas
-        for base in bases:
-            if hasattr(base, "opts"):
-                rdf_type = getattr(base.opts, "rdf_type", [])
-                if rdf_type:
-                    klass.opts.rdf_type.extend(rdf_type)
+        if klass.opts.inherit_parent_types:
+            # Include rdf_type of all parent schemas
+            for base in bases:
+                if hasattr(base, "opts"):
+                    rdf_type = getattr(base.opts, "rdf_type", [])
+                    if rdf_type:
+                        klass.opts.rdf_type.extend(rdf_type)
+                    if not getattr(base.opts, "inherit_parent_types", True):
+                        break
 
         klass.opts.rdf_type = sorted(set(klass.opts.rdf_type))
 
