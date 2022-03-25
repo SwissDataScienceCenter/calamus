@@ -417,6 +417,48 @@ def test_annotation_hook_inheritance():
     assert book._id.endswith("hook1hook2")
 
 
+def test_annotation_hook_only_on_parent():
+    """Test that inheritance works for hooks declared on parent annotated class."""
+    schema = fields.Namespace("http://schema.org/")
+
+    class Book(metaclass=JsonLDAnnotation):
+        _id = fields.Id()
+        name = fields.String(schema.name)
+
+        def __init__(self, _id, name):
+            self._id = _id
+            self.name = name
+
+        class Meta:
+            rdf_type = schema.Book
+
+            @pre_load
+            def _preload(self, in_data, **kwargs):
+                in_data["@id"] += "hook1"
+                return in_data
+
+    class Schoolbook(Book):
+        course = fields.String(schema.course)
+
+        def __init__(self, _id, name, course):
+            self.course = course
+            super().__init__(_id, name)
+
+        class Meta:
+            rdf_type = Book.Meta.rdf_type
+
+    data = {
+        "@id": "http://example.com/books/1",
+        "@type": ["http://schema.org/Book"],
+        "http://schema.org/name": "Hitchhikers Guide to the Galaxy",
+        "http://schema.org/course": "Literature",
+    }
+
+    book = Schoolbook.schema().load(data)
+
+    assert book._id.endswith("hook1")
+
+
 def test_annotation_hook_interrupted_inheritance():
     """Test that inheritance works for occasional hooks declared on annotated classes."""
     schema = fields.Namespace("http://schema.org/")
@@ -444,7 +486,7 @@ def test_annotation_hook_interrupted_inheritance():
             self.course = course
             super().__init__(_id, name)
 
-        class Meta(Book.Meta):
+        class Meta:
             rdf_type = Book.Meta.rdf_type
 
     class Biologybook(Schoolbook):
