@@ -18,6 +18,7 @@
 """Marshmallow schema implementation that supports JSON-LD."""
 
 import inspect
+import types
 import typing
 from collections.abc import Mapping
 from functools import lru_cache
@@ -55,6 +56,8 @@ class JsonLDSchemaOpts(SchemaOpts):
         super().__init__(meta, *args, **kwargs)
 
         self.rdf_type = getattr(meta, "rdf_type", None)
+        self.inherit_parent_types = getattr(meta, "inherit_parent_types", True)
+
         if not isinstance(self.rdf_type, list):
             self.rdf_type = [self.rdf_type] if self.rdf_type else []
         self.rdf_type = sorted(self.rdf_type)
@@ -71,12 +74,15 @@ class JsonLDSchemaMeta(SchemaMeta):
     def __new__(mcs, name, bases, attrs):
         klass = super().__new__(mcs, name, bases, attrs)
 
-        # Include rdf_type of all parent schemas
-        for base in bases:
-            if hasattr(base, "opts"):
-                rdf_type = getattr(base.opts, "rdf_type", [])
-                if rdf_type:
-                    klass.opts.rdf_type.extend(rdf_type)
+        if klass.opts.inherit_parent_types:
+            # Include rdf_type of all parent schemas
+            for base in bases:
+                if hasattr(base, "opts"):
+                    rdf_type = getattr(base.opts, "rdf_type", [])
+                    if rdf_type:
+                        klass.opts.rdf_type.extend(rdf_type)
+                    if not getattr(base.opts, "inherit_parent_types", True):
+                        break
 
         klass.opts.rdf_type = sorted(set(klass.opts.rdf_type))
 
@@ -561,6 +567,7 @@ class JsonLDAnnotation(type):
             if potential_base_schemas:
                 base_schemas = tuple(potential_base_schemas)
 
+        # Copy fields to schema
         attribute_dict = {}
         for attr_name, value in namespace.copy().items():
             if isinstance(value, fields._JsonLDField):
@@ -577,7 +584,16 @@ class JsonLDAnnotation(type):
         if "Meta" not in namespace or not hasattr(namespace["Meta"], "rdf_type"):
             raise ValueError("Setting 'rdf_type' on the `class Meta` is required for calamus annotations")
 
-        attribute_dict["Meta"] = type("Meta", (), {"rdf_type": namespace["Meta"].rdf_type})
+        # Copy `Meta` fields to schema
+        hook_dict = {}
+        meta_attr_dict = {}
+        for attr_name, value in namespace["Meta"].__dict__.items():
+            if hasattr(value, "__marshmallow_hook__"):
+                hook_dict[attr_name] = value
+            elif not attr_name.startswith("_"):
+                meta_attr_dict[attr_name] = value
+
+        attribute_dict["Meta"] = type("Meta", (), meta_attr_dict)
         namespace["__calamus_schema__"] = type(f"{name}Schema", base_schemas, attribute_dict)
 
         @lru_cache(maxsize=5)
@@ -586,6 +602,16 @@ class JsonLDAnnotation(type):
             return namespace["__calamus_schema__"](*args, **kwargs)
 
         namespace[schema.__name__] = schema
+
+        # copy over and patch marshmallow hooks
+        for name, hook in hook_dict.items():
+            if getattr(hook, "__closure__", None) is None:
+                setattr(namespace["__calamus_schema__"], name, hook)
+            else:
+                hook_with_closure = _patch_function_closure_with_class(
+                    hook, namespace["Meta"], namespace["__calamus_schema__"]
+                )
+                setattr(namespace["__calamus_schema__"], name, hook_with_closure)
 
         def dump(self, *args, **kwargs):
             """Convenience method to dump object directly."""
@@ -599,3 +625,50 @@ class JsonLDAnnotation(type):
         namespace["__calamus_schema__"].opts.model = cls
 
         return cls
+
+
+def _patch_function_closure_with_class(func, old_cls, cls):
+    """Patches a functions closure over to a new class.
+
+    Needed to fix `super()` being a closure and copying hooks.
+    `super()` creates a closure over the parent class of a method when instantiating we need to replace that closure
+    to point to the new type see https://bugs.python.org/issue29944 .
+    """
+
+    def make_class_closure(__class__):
+        """Get `cell` for `super`."""
+        return (lambda: super).__closure__[0]
+
+    def make_cell(value):
+        """Wrap `value` into a `cell`."""
+        return (lambda: value).__closure__[0]
+
+    func_with_closure = func
+
+    if getattr(func, "__closure__", None) is not None:
+        # patch class in __closure__ recursively
+        new_closure = []
+        for cell in func.__closure__:
+            if cell.cell_contents == old_cls:
+                new_closure.append(make_class_closure(cls))
+            elif isinstance(cell.cell_contents, types.FunctionType):
+                new_closure.append(make_cell(_patch_function_closure_with_class(cell.cell_contents, old_cls, cls)))
+            else:
+                new_closure.append(cell)
+
+        new_closure = tuple(new_closure)
+        func_with_closure = types.FunctionType(
+            func.__code__,
+            func.__globals__,
+            func.__name__,
+            func.__defaults__,
+            closure=new_closure,
+        )
+
+    # copy over additional attributes that might be on the function
+    for attr_name, value in func.__dict__.items():
+        if isinstance(value, types.FunctionType):
+            value = _patch_function_closure_with_class(value, old_cls, cls)
+        setattr(func_with_closure, attr_name, value)
+
+    return func_with_closure
