@@ -25,7 +25,7 @@ Features
 ~~~~~~~~
 
 - Add support for marshmallow Meta properties on annotated classes (such as ``exclude``).
-- Allow controlling rdf_type inheritance on annotated classes using the ``inherit_parent_types`` boolean flag.
+- Allow controlling ``rdf_type`` inheritance on annotated classes using the ``inherit_parent_types`` Boolean flag.
 - Support defining marshmallow hooks on annotated classes.
 
 `0.3.14 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.13...v0.3.14>`__ (2022-03-23)
