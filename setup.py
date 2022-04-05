@@ -56,11 +56,17 @@ setup(
     extras_require={
         "dev": [
             "black==21.*,>=21.7.0.b0",
+            "click<8.1.0,>=8.0.0",
             "flake8==3.*,>=3.7.9",
             "pre-commit==2.*,>=2.3.0",
             "pytest==5.*,>=5.2.0",
             "pytest-black==0.*,>=0.3.9",
         ],
-        "docs": ["sphinx==3.*,>=3.0.3", "sphinx-rtd-theme==0.*,>=0.4.3", "sphinxcontrib-spelling==5.*,>=5.0.0"],
+        "docs": [
+            "jinja2<3.1.0,>=3.0.0",
+            "sphinx==3.*,>=3.0.3",
+            "sphinx-rtd-theme==0.*,>=0.4.3",
+            "sphinxcontrib-spelling==5.*,>=5.0.0",
+        ],
     },
 )
