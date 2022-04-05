@@ -22,7 +22,7 @@ Changes
 ---------------------------------------------------------------------------------------------------
 
 Features
-~~~~~
+~~~~~~~~
 
 - Add support for marshmallow Meta properties on annotated classes (such as ``exclude``).
 - Allow controlling rdf_type inheritance on annotated classes using the ``inherit_parent_types`` boolean flag.
