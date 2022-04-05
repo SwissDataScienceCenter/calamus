@@ -18,7 +18,7 @@
 
 [tool.poetry]
 name = "calamus"
-version = "0.3.14"
+version = "0.4.0"
 description = "calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD."
 authors = ["Swiss Data Science Center <contact@datascience.ch>"]
 license = "Apache-2.0"
@@ -43,6 +43,7 @@ classifiers = [
 python = "^3.7.1"
 marshmallow = "^3.5.1"
 pyld = "^2.0.2"
+Jinja2 = {version = ">=3.0.0,<3.1.0", optional = true}
 sphinx = {version = "^3.0.3", optional = true}
 sphinx-rtd-theme = {version = "^0.4.3", optional = true}
 sphinxcontrib-spelling = {version = "^5.0.0", optional = true}
@@ -50,14 +51,15 @@ lazy-object-proxy = "^1.4.3"
 rdflib = {version = "^6.0.0"}
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
 black = "^21.7b0"
-pre-commit = "^2.3.0"
+click = ">=8.0.0,<8.1.0"
 flake8 = "^3.7.9"
+pre-commit = "^2.3.0"
+pytest = "^5.2"
 pytest-black = "^0.3.9"
 
 [tool.poetry.extras]
-docs = ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
+docs = ["Jinja2", "sphinx", "sphinx-rtd-theme", "sphinxcontrib-spelling"]
 
 [tool.black]
 line-length = 120
