@@ -117,13 +117,20 @@ class _JsonLDField(fields.Field):
     """
 
     def __init__(self, field_name=None, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        if "default" in kwargs:
+            kwargs["load_default"] = kwargs.get("default")
+
+        filtered_kwargs = {
+            key: value
+            for key, value in kwargs.items()
+            if key not in ["reverse", "init_name", "add_value_types", "default"]
+        }
+        super().__init__(*args, **filtered_kwargs)
         self.field_name = field_name
 
         self.reverse = kwargs.get("reverse", False)
         self.init_name = kwargs.get("init_name", None)
         self.add_value_types = kwargs.get("add_value_types", False)
-        self.default = kwargs.get("default", None)
 
     @property
     def data_key(self):

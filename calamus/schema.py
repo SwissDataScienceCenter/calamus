@@ -539,8 +539,8 @@ class JsonLDAnnotation(type):
            class Meta:
                rdf_type = schema.Person
            _id = fields.Id()
-           birth_date = fields.Date(schema.birthDate, default=dt.now)
-           name = fields.String(schema.name, default=lambda: "John")
+           birth_date = fields.Date(schema.birthDate, load_default=dt.now)
+           name = fields.String(schema.name, load_default=lambda: "John")
 
         user = User()
 
@@ -573,11 +573,11 @@ class JsonLDAnnotation(type):
             if isinstance(value, fields._JsonLDField):
                 attribute_dict[attr_name] = value
 
-                if hasattr(value, "default"):
-                    if callable(value.default):
-                        namespace[attr_name] = value.default()
+                if hasattr(value, "load_default"):
+                    if callable(value.load_default):
+                        namespace[attr_name] = value.load_default()
                     else:
-                        namespace[attr_name] = value.default
+                        namespace[attr_name] = value.load_default
                 else:
                     del namespace[attr_name]
 
