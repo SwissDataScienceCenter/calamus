@@ -18,6 +18,15 @@
 Changes
 =======
 
+`0.4.1 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.4.0...v0.4.1>`__ (2022-09-01)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~~~~
+
+- Remove usage of fields deprecated by marshmallow and don't forward calamus specific fields to
+  prevent warnings.
+
 `0.4.0 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.3.14...v0.4.0>`__ (2022-04-05)
 ---------------------------------------------------------------------------------------------------
 
