@@ -98,9 +98,9 @@ def test_annotation_with_default():
         return "Doe"
 
     class Book(metaclass=JsonLDAnnotation):
-        _id = fields.Id(default="http://example.com/book/1")
-        name = fields.String(schema.name, default=lambda: "Bill")
-        surname = fields.String(schema.surname, default=default_surname)
+        _id = fields.Id(load_default="http://example.com/book/1")
+        name = fields.String(schema.name, load_default=lambda: "Bill")
+        surname = fields.String(schema.surname, load_default=default_surname)
 
         class Meta:
             rdf_type = schema.Book
