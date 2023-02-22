@@ -205,6 +205,12 @@ class IRI(String):
         super().__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
+        if self.parent.opts.add_value_types or self.add_value_types:
+            return {
+                "@value": value,
+                "@type": "http://www.w3.org/2001/XMLSchema#anyURI",
+            }
+
         value = super()._serialize(value, attr, obj, **kwargs)
         if value:
             return {"@id": value}
