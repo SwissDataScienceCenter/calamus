@@ -205,6 +205,9 @@ class IRI(String):
         super().__init__(*args, **kwargs)
 
     def _serialize(self, value, attr, obj, **kwargs):
+        if self.parent.opts.add_value_types or self.add_value_types:
+            return {"@id": value}
+
         value = super()._serialize(value, attr, obj, **kwargs)
         if value:
             return {"@id": value}
