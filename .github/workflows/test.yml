@@ -3,9 +3,11 @@ name: Test, Integration Tests and Deploy
 on:
   push:
     branches:
-    - '**'
+    - 'master'
     tags:
     - 'v*.*.*'
+  pull_request:
+    types: [opened, reopened, synchronize]
 
 jobs:
   docs-linux:
