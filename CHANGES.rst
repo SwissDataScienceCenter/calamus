@@ -18,6 +18,14 @@
 Changes
 =======
 
+`0.4.2 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.4.1...v0.4.2>`__ (2023-02-28)
+--------------------------------------------------------------------------------------------------
+
+Fixes
+~~~~~~~~
+
+- Fix IRI serialization when ``add_value_types`` is ``True``.
+
 `0.4.1 <https://github.com/SwissDataScienceCenter/calamus/compare/v0.4.0...v0.4.1>`__ (2022-09-01)
 --------------------------------------------------------------------------------------------------
 
