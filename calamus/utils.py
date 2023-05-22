@@ -192,3 +192,20 @@ class Proxy(LazyProxy, with_metaclass(_ProxyMetaType)):
             raise AttributeError(name)
         else:
             return getattr(self.__wrapped__, name)
+
+
+def get_type_name(object) -> str:
+    """Return fully-qualified object's type name.
+
+    Args:
+        object:  The object to get the type name for.
+
+    Returns:
+        Optional[str]: The fully qualified type name.
+
+    """
+    if object is None:
+        raise ValueError("Cannot get type name for None.")
+
+    object_type = object if isinstance(object, type) else type(object)
+    return f"{object_type.__module__}.{object_type.__qualname__}"

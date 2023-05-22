@@ -29,7 +29,7 @@ from marshmallow.base import SchemaABC
 from marshmallow.exceptions import ValidationError
 
 from calamus.schema import JsonLDSchema
-from calamus.utils import ONTOLOGY_QUERY, Proxy, normalize_type, normalize_value
+from calamus.utils import ONTOLOGY_QUERY, Proxy, normalize_type, normalize_value, get_type_name
 
 logger = logging.getLogger("calamus")
 
@@ -457,6 +457,7 @@ class Nested(_JsonLDField, fields.Nested):
                     _schema._visited = self.root._visited
                     self._schema["from"][rdf_type] = _schema
                     self._schema["to"][model] = _schema
+                    self._schema["to"][get_type_name(model)] = _schema
                 else:
                     if isinstance(nest, type) and issubclass(nest, SchemaABC):
                         schema_class = nest
@@ -488,6 +489,7 @@ class Nested(_JsonLDField, fields.Nested):
                         _top_level=False,
                     )
                     self._schema["to"][model] = self._schema["from"][rdf_type]
+                    self._schema["to"][get_type_name(model)] = self._schema["from"][rdf_type]
         return self._schema
 
     def _serialize_single_obj(self, obj, **kwargs):
@@ -505,10 +507,13 @@ class Nested(_JsonLDField, fields.Nested):
             # resolve Proxy object
             obj = obj.__wrapped__
 
-        if type(obj) not in self.schema["to"]:
-            ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
+        if type(obj) in self.schema["to"]:
+            schema = self.schema["to"][type(obj)]
+        elif get_type_name(obj) in self.schema["to"]:
+            schema = self.schema["to"][get_type_name(obj)]
+        else:
+            raise ValueError("Type {} not found in field {}.{}".format(type(obj), type(self.parent), self.name))
 
-        schema = self.schema["to"][type(obj)]
         schema._top_level = False
         return schema.dump(obj)
 
