@@ -21,9 +21,9 @@ if os.path.exists(readme_path):
 setup(
     long_description=readme,
     name="calamus",
-    version="0.4.2",
+    version="0.4.3",
     description="calamus is a library built on top of marshmallow to allow (de-)Serialization of Python classes to JSON-LD.",
-    python_requires="==3.*,>=3.7.1",
+    python_requires="==3.*,>=3.9.1",
     project_urls={
         "homepage": "https://github.com/SwissDataScienceCenter/calamus/",
         "repository": "https://github.com/SwissDataScienceCenter/calamus/",
@@ -49,7 +49,7 @@ setup(
     package_data={},
     install_requires=[
         "lazy-object-proxy==1.*,>=1.4.3",
-        "marshmallow==3.*,>=3.14.0",
+        "marshmallow==3.23.*,>=3.23.0",
         "pyld==2.*,>=2.0.2",
         "rdflib==6.*,>=6.0.0",
     ],
@@ -59,12 +59,12 @@ setup(
             "click<8.1.0,>=8.0.0",
             "flake8==3.*,>=3.7.9",
             "pre-commit==2.*,>=2.3.0",
-            "pytest==5.*,>=5.2.0",
+            "pytest==7.*,>=7.0.0",
             "pytest-black==0.*,>=0.3.9",
         ],
         "docs": [
             "jinja2<3.1.0,>=3.0.0",
-            "sphinx==3.*,>=3.0.3",
+            "sphinx==5.*,>=5.0.0",
             "sphinx-rtd-theme==0.*,>=0.4.3",
             "sphinxcontrib-spelling==5.*,>=5.0.0",
         ],
